@@ -125,333 +125,18 @@ define register offset=0x1000 size=$(REGISTER_SIZE)
 	  spr3f0 spr3f1 spr3f2 spr3f3 spr3f4 spr3f5 spr3f6 spr3f7 spr3f8 spr3f9 spr3fa spr3fb spr3fc spr3fd spr3fe spr3ff
 	];
 
-
-# The floating point registers and the altivec vector registers OVERLAP to VSX registers
-# This was not done correctly before and has now been fixed.  Book 1, Chapter 7.2 has a
-# very good diagram. 
-
-# Support for Vector-Scalar Extension - i.e "VSX"
-
-define register offset=0x4000 size=16 
-	[ vs0    vs1   vs2   vs3   vs4   vs5   vs6   vs7   vs8   vs9  vs10  vs11  vs12  vs13  vs14  vs15  
-      vs16  vs17  vs18  vs19  vs20  vs21  vs22  vs23  vs24  vs25  vs26  vs27  vs28  vs29  vs30  vs31 
-      vs32  vs33  vs34  vs35  vs36  vs37  vs38  vs39  vs40  vs41  vs42  vs43  vs44  vs45  vs46  vs47  
-      vs48  vs49  vs50  vs51  vs52  vs53  vs54  vs55  vs56  vs57  vs58  vs59  vs60  vs61  vs62  vs63 
-    ];
-# Floating point registers	
-# These overlay the first 32 vsx regs with the gaps as indicated so fr0 is in vs0, fr1 is in vs1, etc.
-# This also means we have to have 2 defs of this due to endian stuff.
-@if ENDIAN == "big"
+# Floating point registers
 define register offset=0x4000 size=8 [ 
-	f0  _ f1  _ f2  _ f3  _ f4  _ f5  _ f6  _ f7  _ f8  _ f9  _ f10 _ f11 _ f12 _ f13 _ f14 _ f15 _
-	f16 _ f17 _ f18 _ f19 _ f20 _ f21 _ f22 _ f23 _ f24 _ f25 _ f26 _ f27 _ f28 _ f29 _ f30 _ f31 _ ];
-	
-@else
-define register offset=0x4000 size=8 [ 
-	_ f0  _ f1  _ f2  _ f3  _ f4  _ f5  _ f6  _ f7  _ f8  _ f9  _ f10 _ f11 _ f12 _ f13 _ f14 _ f15 
-	_ f16 _ f17 _ f18 _ f19 _ f20 _ f21 _ f22 _ f23 _ f24 _ f25 _ f26 _ f27 _ f28 _ f29 _ f30 _ f31 ];
-@endif
+	f0  f1  f2  f3  f4  f5  f6  f7  f8  f9  f10 f11 f12 f13 f14 f15
+	f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 f27 f28 f29 f30 f31 ];
 
-# All the altivec regs need to start at offset 0x4200
-# Sleigh does not allow registers of the same size to overlay. This presents some issues as the normal
-# Altivec registers overlay the top 32 VSX registers. What we have to do is use a sub-table to display
-# the Altivec name, but export the matching VSX register. The original vrD, etc. tokens are now sub-tables.
+# Paired singles registers
+define register offset=0x4000 size=4 [
+	 ps0_0  ps0_1  ps1_0  ps1_1  ps2_0  ps2_1  ps3_0  ps3_1  ps4_0  ps4_1  ps5_0  ps5_1  ps6_0  ps6_1  ps7_0  ps7_1
+	 ps8_0  ps8_1  ps9_0  ps9_1 ps10_0 ps10_1 ps11_0 ps11_1 ps12_0 ps12_1 ps13_0 ps13_1 ps14_0 ps14_1 ps15_0 ps15_1
+	ps16_0 ps16_1 ps17_0 ps17_1 ps18_0 ps18_1 ps19_0 ps19_1 ps20_0 ps20_1 ps21_0 ps21_1 ps22_0 ps22_1 ps23_0 ps23_1
+	ps24_0 ps24_1 ps25_0 ps25_1 ps26_0 ps26_1 ps27_0 ps27_1 ps28_0 ps28_1 ps29_0 ps29_1 ps30_0 ps30_1 ps31_0 ps31_1 ];
 
-# Altivec vector registers (accessed by vrD vrA vrB vrS vrC)
-# Altivec vector registers
-#define register offset=0x4200 size=16 [ 
-#	v0  v1  v2  v3  v4  v5  v6  v7  v8  v9  v10 v11 v12 v13 v14 v15
-#	v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27 v28 v29 v30 v31 ];
-
-@if ENDIAN == "big"
-
-# Create psydo sub-registers for the Altivec vector registers to allow better easier vector instructions by 8 byte subregisters
-define register offset=0x4200 size=8 [ # 64 bit access to vrN registers (psydo-registers) (accessed by vrD_64_N vrA_64_N vrB_64_N vrS_64_N vrC_64_N)
-vr0_64_0 vr0_64_1 
-vr1_64_0 vr1_64_1 
-vr2_64_0 vr2_64_1 
-vr3_64_0 vr3_64_1 
-vr4_64_0 vr4_64_1 
-vr5_64_0 vr5_64_1 
-vr6_64_0 vr6_64_1 
-vr7_64_0 vr7_64_1 
-vr8_64_0 vr8_64_1 
-vr9_64_0 vr9_64_1 
-vr10_64_0 vr10_64_1 
-vr11_64_0 vr11_64_1 
-vr12_64_0 vr12_64_1 
-vr13_64_0 vr13_64_1 
-vr14_64_0 vr14_64_1 
-vr15_64_0 vr15_64_1 
-vr16_64_0 vr16_64_1 
-vr17_64_0 vr17_64_1 
-vr18_64_0 vr18_64_1 
-vr19_64_0 vr19_64_1 
-vr20_64_0 vr20_64_1 
-vr21_64_0 vr21_64_1 
-vr22_64_0 vr22_64_1 
-vr23_64_0 vr23_64_1 
-vr24_64_0 vr24_64_1 
-vr25_64_0 vr25_64_1 
-vr26_64_0 vr26_64_1 
-vr27_64_0 vr27_64_1 
-vr28_64_0 vr28_64_1 
-vr29_64_0 vr29_64_1 
-vr30_64_0 vr30_64_1 
-vr31_64_0 vr31_64_1 
-];
-
-# Create psydo sub-registers for the Altivec vector registers to allow better easier vector instructions by 4 byte subregisters
-define register offset=0x4200 size=4 [ # 32 bit access to vrN registers (psydo-registers) (accessed by vrD_32_N vrA_32_N vrB_32_N vrS_32_N vrC_32_N)
-vr0_32_0 vr0_32_1 vr0_32_2 vr0_32_3 
-vr1_32_0 vr1_32_1 vr1_32_2 vr1_32_3 
-vr2_32_0 vr2_32_1 vr2_32_2 vr2_32_3 
-vr3_32_0 vr3_32_1 vr3_32_2 vr3_32_3 
-vr4_32_0 vr4_32_1 vr4_32_2 vr4_32_3 
-vr5_32_0 vr5_32_1 vr5_32_2 vr5_32_3 
-vr6_32_0 vr6_32_1 vr6_32_2 vr6_32_3 
-vr7_32_0 vr7_32_1 vr7_32_2 vr7_32_3 
-vr8_32_0 vr8_32_1 vr8_32_2 vr8_32_3 
-vr9_32_0 vr9_32_1 vr9_32_2 vr9_32_3 
-vr10_32_0 vr10_32_1 vr10_32_2 vr10_32_3 
-vr11_32_0 vr11_32_1 vr11_32_2 vr11_32_3 
-vr12_32_0 vr12_32_1 vr12_32_2 vr12_32_3 
-vr13_32_0 vr13_32_1 vr13_32_2 vr13_32_3 
-vr14_32_0 vr14_32_1 vr14_32_2 vr14_32_3 
-vr15_32_0 vr15_32_1 vr15_32_2 vr15_32_3 
-vr16_32_0 vr16_32_1 vr16_32_2 vr16_32_3 
-vr17_32_0 vr17_32_1 vr17_32_2 vr17_32_3 
-vr18_32_0 vr18_32_1 vr18_32_2 vr18_32_3 
-vr19_32_0 vr19_32_1 vr19_32_2 vr19_32_3 
-vr20_32_0 vr20_32_1 vr20_32_2 vr20_32_3 
-vr21_32_0 vr21_32_1 vr21_32_2 vr21_32_3 
-vr22_32_0 vr22_32_1 vr22_32_2 vr22_32_3 
-vr23_32_0 vr23_32_1 vr23_32_2 vr23_32_3 
-vr24_32_0 vr24_32_1 vr24_32_2 vr24_32_3 
-vr25_32_0 vr25_32_1 vr25_32_2 vr25_32_3 
-vr26_32_0 vr26_32_1 vr26_32_2 vr26_32_3 
-vr27_32_0 vr27_32_1 vr27_32_2 vr27_32_3 
-vr28_32_0 vr28_32_1 vr28_32_2 vr28_32_3 
-vr29_32_0 vr29_32_1 vr29_32_2 vr29_32_3 
-vr30_32_0 vr30_32_1 vr30_32_2 vr30_32_3 
-vr31_32_0 vr31_32_1 vr31_32_2 vr31_32_3 
-];
-
-# Create psydo sub-registers for the Altivec vector registers to allow better easier vector instructions by 2 byte subregisters
-define register offset=0x4200 size=2 [ # 16 bit access to vrN registers (psydo-registers) (accessed by vrD_16_N vrA_16_N vrB_16_N vrS_16_N vrC_16_N)
-vr0_16_0 vr0_16_1 vr0_16_2 vr0_16_3 vr0_16_4 vr0_16_5 vr0_16_6 vr0_16_7 
-vr1_16_0 vr1_16_1 vr1_16_2 vr1_16_3 vr1_16_4 vr1_16_5 vr1_16_6 vr1_16_7	
-vr2_16_0 vr2_16_1 vr2_16_2 vr2_16_3 vr2_16_4 vr2_16_5 vr2_16_6 vr2_16_7 
-vr3_16_0 vr3_16_1 vr3_16_2 vr3_16_3 vr3_16_4 vr3_16_5 vr3_16_6 vr3_16_7 
-vr4_16_0 vr4_16_1 vr4_16_2 vr4_16_3 vr4_16_4 vr4_16_5 vr4_16_6 vr4_16_7 
-vr5_16_0 vr5_16_1 vr5_16_2 vr5_16_3 vr5_16_4 vr5_16_5 vr5_16_6 vr5_16_7 
-vr6_16_0 vr6_16_1 vr6_16_2 vr6_16_3 vr6_16_4 vr6_16_5 vr6_16_6 vr6_16_7 
-vr7_16_0 vr7_16_1 vr7_16_2 vr7_16_3 vr7_16_4 vr7_16_5 vr7_16_6 vr7_16_7 
-vr8_16_0 vr8_16_1 vr8_16_2 vr8_16_3 vr8_16_4 vr8_16_5 vr8_16_6 vr8_16_7 
-vr9_16_0 vr9_16_1 vr9_16_2 vr9_16_3 vr9_16_4 vr9_16_5 vr9_16_6 vr9_16_7 
-vr10_16_0 vr10_16_1 vr10_16_2 vr10_16_3 vr10_16_4 vr10_16_5 vr10_16_6 vr10_16_7 
-vr11_16_0 vr11_16_1 vr11_16_2 vr11_16_3 vr11_16_4 vr11_16_5 vr11_16_6 vr11_16_7 
-vr12_16_0 vr12_16_1 vr12_16_2 vr12_16_3 vr12_16_4 vr12_16_5 vr12_16_6 vr12_16_7 
-vr13_16_0 vr13_16_1 vr13_16_2 vr13_16_3 vr13_16_4 vr13_16_5 vr13_16_6 vr13_16_7 
-vr14_16_0 vr14_16_1 vr14_16_2 vr14_16_3 vr14_16_4 vr14_16_5 vr14_16_6 vr14_16_7 
-vr15_16_0 vr15_16_1 vr15_16_2 vr15_16_3 vr15_16_4 vr15_16_5 vr15_16_6 vr15_16_7 
-vr16_16_0 vr16_16_1 vr16_16_2 vr16_16_3 vr16_16_4 vr16_16_5 vr16_16_6 vr16_16_7 
-vr17_16_0 vr17_16_1 vr17_16_2 vr17_16_3 vr17_16_4 vr17_16_5 vr17_16_6 vr17_16_7 
-vr18_16_0 vr18_16_1 vr18_16_2 vr18_16_3 vr18_16_4 vr18_16_5 vr18_16_6 vr18_16_7 
-vr19_16_0 vr19_16_1 vr19_16_2 vr19_16_3 vr19_16_4 vr19_16_5 vr19_16_6 vr19_16_7 
-vr20_16_0 vr20_16_1 vr20_16_2 vr20_16_3 vr20_16_4 vr20_16_5 vr20_16_6 vr20_16_7 
-vr21_16_0 vr21_16_1 vr21_16_2 vr21_16_3 vr21_16_4 vr21_16_5 vr21_16_6 vr21_16_7 
-vr22_16_0 vr22_16_1 vr22_16_2 vr22_16_3 vr22_16_4 vr22_16_5 vr22_16_6 vr22_16_7 
-vr23_16_0 vr23_16_1 vr23_16_2 vr23_16_3 vr23_16_4 vr23_16_5 vr23_16_6 vr23_16_7 
-vr24_16_0 vr24_16_1 vr24_16_2 vr24_16_3 vr24_16_4 vr24_16_5 vr24_16_6 vr24_16_7 
-vr25_16_0 vr25_16_1 vr25_16_2 vr25_16_3 vr25_16_4 vr25_16_5 vr25_16_6 vr25_16_7 
-vr26_16_0 vr26_16_1 vr26_16_2 vr26_16_3 vr26_16_4 vr26_16_5 vr26_16_6 vr26_16_7 
-vr27_16_0 vr27_16_1 vr27_16_2 vr27_16_3 vr27_16_4 vr27_16_5 vr27_16_6 vr27_16_7 
-vr28_16_0 vr28_16_1 vr28_16_2 vr28_16_3 vr28_16_4 vr28_16_5 vr28_16_6 vr28_16_7 
-vr29_16_0 vr29_16_1 vr29_16_2 vr29_16_3 vr29_16_4 vr29_16_5 vr29_16_6 vr29_16_7 
-vr30_16_0 vr30_16_1 vr30_16_2 vr30_16_3 vr30_16_4 vr30_16_5 vr30_16_6 vr30_16_7 
-vr31_16_0 vr31_16_1 vr31_16_2 vr31_16_3 vr31_16_4 vr31_16_5 vr31_16_6 vr31_16_7 
-];
-
-# Create psydo sub-registers for the Altivec vector registers to allow better easier vector instructions by 1 byte subregisters
-define register offset=0x4200 size=1 [ # 8 bit access to vrN registers (psydo-registers) (accessed by vrD_8_N vrA_8_N vrB_8_N vrS_8_N vrC_8_N)
-vr0_8_0 vr0_8_1 vr0_8_2 vr0_8_3 vr0_8_4 vr0_8_5 vr0_8_6 vr0_8_7 vr0_8_8 vr0_8_9 vr0_8_10 vr0_8_11 vr0_8_12 vr0_8_13 vr0_8_14 vr0_8_15 
-vr1_8_0 vr1_8_1 vr1_8_2 vr1_8_3 vr1_8_4 vr1_8_5 vr1_8_6 vr1_8_7 vr1_8_8 vr1_8_9 vr1_8_10 vr1_8_11 vr1_8_12 vr1_8_13 vr1_8_14 vr1_8_15 
-vr2_8_0 vr2_8_1 vr2_8_2 vr2_8_3 vr2_8_4 vr2_8_5 vr2_8_6 vr2_8_7 vr2_8_8 vr2_8_9 vr2_8_10 vr2_8_11 vr2_8_12 vr2_8_13 vr2_8_14 vr2_8_15 
-vr3_8_0 vr3_8_1 vr3_8_2 vr3_8_3 vr3_8_4 vr3_8_5 vr3_8_6 vr3_8_7 vr3_8_8 vr3_8_9 vr3_8_10 vr3_8_11 vr3_8_12 vr3_8_13 vr3_8_14 vr3_8_15 
-vr4_8_0 vr4_8_1 vr4_8_2 vr4_8_3 vr4_8_4 vr4_8_5 vr4_8_6 vr4_8_7 vr4_8_8 vr4_8_9 vr4_8_10 vr4_8_11 vr4_8_12 vr4_8_13 vr4_8_14 vr4_8_15 
-vr5_8_0 vr5_8_1 vr5_8_2 vr5_8_3 vr5_8_4 vr5_8_5 vr5_8_6 vr5_8_7 vr5_8_8 vr5_8_9 vr5_8_10 vr5_8_11 vr5_8_12 vr5_8_13 vr5_8_14 vr5_8_15 
-vr6_8_0 vr6_8_1 vr6_8_2 vr6_8_3 vr6_8_4 vr6_8_5 vr6_8_6 vr6_8_7 vr6_8_8 vr6_8_9 vr6_8_10 vr6_8_11 vr6_8_12 vr6_8_13 vr6_8_14 vr6_8_15 
-vr7_8_0 vr7_8_1 vr7_8_2 vr7_8_3 vr7_8_4 vr7_8_5 vr7_8_6 vr7_8_7 vr7_8_8 vr7_8_9 vr7_8_10 vr7_8_11 vr7_8_12 vr7_8_13 vr7_8_14 vr7_8_15 
-vr8_8_0 vr8_8_1 vr8_8_2 vr8_8_3 vr8_8_4 vr8_8_5 vr8_8_6 vr8_8_7 vr8_8_8 vr8_8_9 vr8_8_10 vr8_8_11 vr8_8_12 vr8_8_13 vr8_8_14 vr8_8_15 
-vr9_8_0 vr9_8_1 vr9_8_2 vr9_8_3 vr9_8_4 vr9_8_5 vr9_8_6 vr9_8_7 vr9_8_8 vr9_8_9 vr9_8_10 vr9_8_11 vr9_8_12 vr9_8_13 vr9_8_14 vr9_8_15 
-vr10_8_0 vr10_8_1 vr10_8_2 vr10_8_3 vr10_8_4 vr10_8_5 vr10_8_6 vr10_8_7 vr10_8_8 vr10_8_9 vr10_8_10 vr10_8_11 vr10_8_12 vr10_8_13 vr10_8_14 vr10_8_15 
-vr11_8_0 vr11_8_1 vr11_8_2 vr11_8_3 vr11_8_4 vr11_8_5 vr11_8_6 vr11_8_7 vr11_8_8 vr11_8_9 vr11_8_10 vr11_8_11 vr11_8_12 vr11_8_13 vr11_8_14 vr11_8_15 
-vr12_8_0 vr12_8_1 vr12_8_2 vr12_8_3 vr12_8_4 vr12_8_5 vr12_8_6 vr12_8_7 vr12_8_8 vr12_8_9 vr12_8_10 vr12_8_11 vr12_8_12 vr12_8_13 vr12_8_14 vr12_8_15 
-vr13_8_0 vr13_8_1 vr13_8_2 vr13_8_3 vr13_8_4 vr13_8_5 vr13_8_6 vr13_8_7 vr13_8_8 vr13_8_9 vr13_8_10 vr13_8_11 vr13_8_12 vr13_8_13 vr13_8_14 vr13_8_15 
-vr14_8_0 vr14_8_1 vr14_8_2 vr14_8_3 vr14_8_4 vr14_8_5 vr14_8_6 vr14_8_7 vr14_8_8 vr14_8_9 vr14_8_10 vr14_8_11 vr14_8_12 vr14_8_13 vr14_8_14 vr14_8_15 
-vr15_8_0 vr15_8_1 vr15_8_2 vr15_8_3 vr15_8_4 vr15_8_5 vr15_8_6 vr15_8_7 vr15_8_8 vr15_8_9 vr15_8_10 vr15_8_11 vr15_8_12 vr15_8_13 vr15_8_14 vr15_8_15 
-vr16_8_0 vr16_8_1 vr16_8_2 vr16_8_3 vr16_8_4 vr16_8_5 vr16_8_6 vr16_8_7 vr16_8_8 vr16_8_9 vr16_8_10 vr16_8_11 vr16_8_12 vr16_8_13 vr16_8_14 vr16_8_15 
-vr17_8_0 vr17_8_1 vr17_8_2 vr17_8_3 vr17_8_4 vr17_8_5 vr17_8_6 vr17_8_7 vr17_8_8 vr17_8_9 vr17_8_10 vr17_8_11 vr17_8_12 vr17_8_13 vr17_8_14 vr17_8_15 
-vr18_8_0 vr18_8_1 vr18_8_2 vr18_8_3 vr18_8_4 vr18_8_5 vr18_8_6 vr18_8_7 vr18_8_8 vr18_8_9 vr18_8_10 vr18_8_11 vr18_8_12 vr18_8_13 vr18_8_14 vr18_8_15 
-vr19_8_0 vr19_8_1 vr19_8_2 vr19_8_3 vr19_8_4 vr19_8_5 vr19_8_6 vr19_8_7 vr19_8_8 vr19_8_9 vr19_8_10 vr19_8_11 vr19_8_12 vr19_8_13 vr19_8_14 vr19_8_15 
-vr20_8_0 vr20_8_1 vr20_8_2 vr20_8_3 vr20_8_4 vr20_8_5 vr20_8_6 vr20_8_7 vr20_8_8 vr20_8_9 vr20_8_10 vr20_8_11 vr20_8_12 vr20_8_13 vr20_8_14 vr20_8_15 
-vr21_8_0 vr21_8_1 vr21_8_2 vr21_8_3 vr21_8_4 vr21_8_5 vr21_8_6 vr21_8_7 vr21_8_8 vr21_8_9 vr21_8_10 vr21_8_11 vr21_8_12 vr21_8_13 vr21_8_14 vr21_8_15 
-vr22_8_0 vr22_8_1 vr22_8_2 vr22_8_3 vr22_8_4 vr22_8_5 vr22_8_6 vr22_8_7 vr22_8_8 vr22_8_9 vr22_8_10 vr22_8_11 vr22_8_12 vr22_8_13 vr22_8_14 vr22_8_15 
-vr23_8_0 vr23_8_1 vr23_8_2 vr23_8_3 vr23_8_4 vr23_8_5 vr23_8_6 vr23_8_7 vr23_8_8 vr23_8_9 vr23_8_10 vr23_8_11 vr23_8_12 vr23_8_13 vr23_8_14 vr23_8_15 
-vr24_8_0 vr24_8_1 vr24_8_2 vr24_8_3 vr24_8_4 vr24_8_5 vr24_8_6 vr24_8_7 vr24_8_8 vr24_8_9 vr24_8_10 vr24_8_11 vr24_8_12 vr24_8_13 vr24_8_14 vr24_8_15 
-vr25_8_0 vr25_8_1 vr25_8_2 vr25_8_3 vr25_8_4 vr25_8_5 vr25_8_6 vr25_8_7 vr25_8_8 vr25_8_9 vr25_8_10 vr25_8_11 vr25_8_12 vr25_8_13 vr25_8_14 vr25_8_15 
-vr26_8_0 vr26_8_1 vr26_8_2 vr26_8_3 vr26_8_4 vr26_8_5 vr26_8_6 vr26_8_7 vr26_8_8 vr26_8_9 vr26_8_10 vr26_8_11 vr26_8_12 vr26_8_13 vr26_8_14 vr26_8_15 
-vr27_8_0 vr27_8_1 vr27_8_2 vr27_8_3 vr27_8_4 vr27_8_5 vr27_8_6 vr27_8_7 vr27_8_8 vr27_8_9 vr27_8_10 vr27_8_11 vr27_8_12 vr27_8_13 vr27_8_14 vr27_8_15 
-vr28_8_0 vr28_8_1 vr28_8_2 vr28_8_3 vr28_8_4 vr28_8_5 vr28_8_6 vr28_8_7 vr28_8_8 vr28_8_9 vr28_8_10 vr28_8_11 vr28_8_12 vr28_8_13 vr28_8_14 vr28_8_15 
-vr29_8_0 vr29_8_1 vr29_8_2 vr29_8_3 vr29_8_4 vr29_8_5 vr29_8_6 vr29_8_7 vr29_8_8 vr29_8_9 vr29_8_10 vr29_8_11 vr29_8_12 vr29_8_13 vr29_8_14 vr29_8_15 
-vr30_8_0 vr30_8_1 vr30_8_2 vr30_8_3 vr30_8_4 vr30_8_5 vr30_8_6 vr30_8_7 vr30_8_8 vr30_8_9 vr30_8_10 vr30_8_11 vr30_8_12 vr30_8_13 vr30_8_14 vr30_8_15 
-vr31_8_0 vr31_8_1 vr31_8_2 vr31_8_3 vr31_8_4 vr31_8_5 vr31_8_6 vr31_8_7 vr31_8_8 vr31_8_9 vr31_8_10 vr31_8_11 vr31_8_12 vr31_8_13 vr31_8_14 vr31_8_15 
-];
-@else
-define register offset=0x4200 size=8 [ # 64 bit access to vrN registers (psydo-registers) (accessed by vrD_64_N vrA_64_N vrB_64_N vrS_64_N vrC_64_N)
-vr0_64_1 vr0_64_0 
-vr1_64_1 vr1_64_0 
-vr2_64_1 vr2_64_0 
-vr3_64_1 vr3_64_0 
-vr4_64_1 vr4_64_0 
-vr5_64_1 vr5_64_0 
-vr6_64_1 vr6_64_0 
-vr7_64_1 vr7_64_0 
-vr8_64_1 vr8_64_0 
-vr9_64_1 vr9_64_0 
-vr10_64_1 vr10_64_0 
-vr11_64_1 vr11_64_0 
-vr12_64_1 vr12_64_0 
-vr13_64_1 vr13_64_0 
-vr14_64_1 vr14_64_0 
-vr15_64_1 vr15_64_0 
-vr16_64_1 vr16_64_0 
-vr17_64_1 vr17_64_0 
-vr18_64_1 vr18_64_0 
-vr19_64_1 vr19_64_0 
-vr20_64_1 vr20_64_0 
-vr21_64_1 vr21_64_0 
-vr22_64_1 vr22_64_0 
-vr23_64_1 vr23_64_0 
-vr24_64_1 vr24_64_0 
-vr25_64_1 vr25_64_0 
-vr26_64_1 vr26_64_0 
-vr27_64_1 vr27_64_0 
-vr28_64_1 vr28_64_0 
-vr29_64_1 vr29_64_0 
-vr30_64_1 vr30_64_0 
-vr31_64_1 vr31_64_0 
-];
-
-define register offset=0x4200 size=4 [ # 32 bit access to vrN registers (psydo-registers) (accessed by vrD_32_N vrA_32_N vrB_32_N vrS_32_N vrC_32_N)
-vr0_32_3 vr0_32_2 vr0_32_1 vr0_32_0 
-vr1_32_3 vr1_32_2 vr1_32_1 vr1_32_0 
-vr2_32_3 vr2_32_2 vr2_32_1 vr2_32_0 
-vr3_32_3 vr3_32_2 vr3_32_1 vr3_32_0 
-vr4_32_3 vr4_32_2 vr4_32_1 vr4_32_0 
-vr5_32_3 vr5_32_2 vr5_32_1 vr5_32_0 
-vr6_32_3 vr6_32_2 vr6_32_1 vr6_32_0 
-vr7_32_3 vr7_32_2 vr7_32_1 vr7_32_0 
-vr8_32_3 vr8_32_2 vr8_32_1 vr8_32_0 
-vr9_32_3 vr9_32_2 vr9_32_1 vr9_32_0 
-vr10_32_3 vr10_32_2 vr10_32_1 vr10_32_0 
-vr11_32_3 vr11_32_2 vr11_32_1 vr11_32_0 
-vr12_32_3 vr12_32_2 vr12_32_1 vr12_32_0 
-vr13_32_3 vr13_32_2 vr13_32_1 vr13_32_0 
-vr14_32_3 vr14_32_2 vr14_32_1 vr14_32_0 
-vr15_32_3 vr15_32_2 vr15_32_1 vr15_32_0 
-vr16_32_3 vr16_32_2 vr16_32_1 vr16_32_0 
-vr17_32_3 vr17_32_2 vr17_32_1 vr17_32_0 
-vr18_32_3 vr18_32_2 vr18_32_1 vr18_32_0 
-vr19_32_3 vr19_32_2 vr19_32_1 vr19_32_0 
-vr20_32_3 vr20_32_2 vr20_32_1 vr20_32_0 
-vr21_32_3 vr21_32_2 vr21_32_1 vr21_32_0 
-vr22_32_3 vr22_32_2 vr22_32_1 vr22_32_0 
-vr23_32_3 vr23_32_2 vr23_32_1 vr23_32_0 
-vr24_32_3 vr24_32_2 vr24_32_1 vr24_32_0 
-vr25_32_3 vr25_32_2 vr25_32_1 vr25_32_0 
-vr26_32_3 vr26_32_2 vr26_32_1 vr26_32_0 
-vr27_32_3 vr27_32_2 vr27_32_1 vr27_32_0 
-vr28_32_3 vr28_32_2 vr28_32_1 vr28_32_0 
-vr29_32_3 vr29_32_2 vr29_32_1 vr29_32_0 
-vr30_32_3 vr30_32_2 vr30_32_1 vr30_32_0 
-vr31_32_3 vr31_32_2 vr31_32_1 vr31_32_0 
-];
-
-# Create psydo sub-registers for the Altivec vector registers to allow better easier vector instructions by 2 byte subregisters
-define register offset=0x4200 size=2 [ # 16 bit access to vrN registers (psydo-registers) (accessed by vrD_16_N vrA_16_N vrB_16_N vrS_16_N vrC_16_N)
-vr0_16_7 vr0_16_6 vr0_16_5 vr0_16_4 vr0_16_3 vr0_16_2 vr0_16_1 vr0_16_0 
-vr1_16_7 vr1_16_6 vr1_16_5 vr1_16_4 vr1_16_3 vr1_16_2 vr1_16_1 vr1_16_0	
-vr2_16_7 vr2_16_6 vr2_16_5 vr2_16_4 vr2_16_3 vr2_16_2 vr2_16_1 vr2_16_0 
-vr3_16_7 vr3_16_6 vr3_16_5 vr3_16_4 vr3_16_3 vr3_16_2 vr3_16_1 vr3_16_0 
-vr4_16_7 vr4_16_6 vr4_16_5 vr4_16_4 vr4_16_3 vr4_16_2 vr4_16_1 vr4_16_0 
-vr5_16_7 vr5_16_6 vr5_16_5 vr5_16_4 vr5_16_3 vr5_16_2 vr5_16_1 vr5_16_0 
-vr6_16_7 vr6_16_6 vr6_16_5 vr6_16_4 vr6_16_3 vr6_16_2 vr6_16_1 vr6_16_0 
-vr7_16_7 vr7_16_6 vr7_16_5 vr7_16_4 vr7_16_3 vr7_16_2 vr7_16_1 vr7_16_0 
-vr8_16_7 vr8_16_6 vr8_16_5 vr8_16_4 vr8_16_3 vr8_16_2 vr8_16_1 vr8_16_0 
-vr9_16_7 vr9_16_6 vr9_16_5 vr9_16_4 vr9_16_3 vr9_16_2 vr9_16_1 vr9_16_0 
-vr10_16_7 vr10_16_6 vr10_16_5 vr10_16_4 vr10_16_3 vr10_16_2 vr10_16_1 vr10_16_0 
-vr11_16_7 vr11_16_6 vr11_16_5 vr11_16_4 vr11_16_3 vr11_16_2 vr11_16_1 vr11_16_0 
-vr12_16_7 vr12_16_6 vr12_16_5 vr12_16_4 vr12_16_3 vr12_16_2 vr12_16_1 vr12_16_0 
-vr13_16_7 vr13_16_6 vr13_16_5 vr13_16_4 vr13_16_3 vr13_16_2 vr13_16_1 vr13_16_0 
-vr14_16_7 vr14_16_6 vr14_16_5 vr14_16_4 vr14_16_3 vr14_16_2 vr14_16_1 vr14_16_0 
-vr15_16_7 vr15_16_6 vr15_16_5 vr15_16_4 vr15_16_3 vr15_16_2 vr15_16_1 vr15_16_0 
-vr16_16_7 vr16_16_6 vr16_16_5 vr16_16_4 vr16_16_3 vr16_16_2 vr16_16_1 vr16_16_0 
-vr17_16_7 vr17_16_6 vr17_16_5 vr17_16_4 vr17_16_3 vr17_16_2 vr17_16_1 vr17_16_0 
-vr18_16_7 vr18_16_6 vr18_16_5 vr18_16_4 vr18_16_3 vr18_16_2 vr18_16_1 vr18_16_0 
-vr19_16_7 vr19_16_6 vr19_16_5 vr19_16_4 vr19_16_3 vr19_16_2 vr19_16_1 vr19_16_0 
-vr20_16_7 vr20_16_6 vr20_16_5 vr20_16_4 vr20_16_3 vr20_16_2 vr20_16_1 vr20_16_0 
-vr21_16_7 vr21_16_6 vr21_16_5 vr21_16_4 vr21_16_3 vr21_16_2 vr21_16_1 vr21_16_0 
-vr22_16_7 vr22_16_6 vr22_16_5 vr22_16_4 vr22_16_3 vr22_16_2 vr22_16_1 vr22_16_0 
-vr23_16_7 vr23_16_6 vr23_16_5 vr23_16_4 vr23_16_3 vr23_16_2 vr23_16_1 vr23_16_0 
-vr24_16_7 vr24_16_6 vr24_16_5 vr24_16_4 vr24_16_3 vr24_16_2 vr24_16_1 vr24_16_0 
-vr25_16_7 vr25_16_6 vr25_16_5 vr25_16_4 vr25_16_3 vr25_16_2 vr25_16_1 vr25_16_0 
-vr26_16_7 vr26_16_6 vr26_16_5 vr26_16_4 vr26_16_3 vr26_16_2 vr26_16_1 vr26_16_0 
-vr27_16_7 vr27_16_6 vr27_16_5 vr27_16_4 vr27_16_3 vr27_16_2 vr27_16_1 vr27_16_0 
-vr28_16_7 vr28_16_6 vr28_16_5 vr28_16_4 vr28_16_3 vr28_16_2 vr28_16_1 vr28_16_0 
-vr29_16_7 vr29_16_6 vr29_16_5 vr29_16_4 vr29_16_3 vr29_16_2 vr29_16_1 vr29_16_0 
-vr30_16_7 vr30_16_6 vr30_16_5 vr30_16_4 vr30_16_3 vr30_16_2 vr30_16_1 vr30_16_0 
-vr31_16_7 vr31_16_6 vr31_16_5 vr31_16_4 vr31_16_3 vr31_16_2 vr31_16_1 vr31_16_0 
-];
-
-# Create psydo sub-registers for the Altivec vector registers to allow better easier vector instructions by 1 byte subregisters
-define register offset=0x4200 size=1 [ # 8 bit access to vrN registers (psydo-registers) (accessed by vrD_8_N vrA_8_N vrB_8_N vrS_8_N vrC_8_N)
-vr0_8_15 vr0_8_14 vr0_8_13 vr0_8_12 vr0_8_11 vr0_8_10 vr0_8_9 vr0_8_8 vr0_8_7 vr0_8_6 vr0_8_5 vr0_8_4 vr0_8_3 vr0_8_2 vr0_8_1 vr0_8_0 
-vr1_8_15 vr1_8_14 vr1_8_13 vr1_8_12 vr1_8_11 vr1_8_10 vr1_8_9 vr1_8_8 vr1_8_7 vr1_8_6 vr1_8_5 vr1_8_4 vr1_8_3 vr1_8_2 vr1_8_1 vr1_8_0 
-vr2_8_15 vr2_8_14 vr2_8_13 vr2_8_12 vr2_8_11 vr2_8_10 vr2_8_9 vr2_8_8 vr2_8_7 vr2_8_6 vr2_8_5 vr2_8_4 vr2_8_3 vr2_8_2 vr2_8_1 vr2_8_0 
-vr3_8_15 vr3_8_14 vr3_8_13 vr3_8_12 vr3_8_11 vr3_8_10 vr3_8_9 vr3_8_8 vr3_8_7 vr3_8_6 vr3_8_5 vr3_8_4 vr3_8_3 vr3_8_2 vr3_8_1 vr3_8_0 
-vr4_8_15 vr4_8_14 vr4_8_13 vr4_8_12 vr4_8_11 vr4_8_10 vr4_8_9 vr4_8_8 vr4_8_7 vr4_8_6 vr4_8_5 vr4_8_4 vr4_8_3 vr4_8_2 vr4_8_1 vr4_8_0 
-vr5_8_15 vr5_8_14 vr5_8_13 vr5_8_12 vr5_8_11 vr5_8_10 vr5_8_9 vr5_8_8 vr5_8_7 vr5_8_6 vr5_8_5 vr5_8_4 vr5_8_3 vr5_8_2 vr5_8_1 vr5_8_0 
-vr6_8_15 vr6_8_14 vr6_8_13 vr6_8_12 vr6_8_11 vr6_8_10 vr6_8_9 vr6_8_8 vr6_8_7 vr6_8_6 vr6_8_5 vr6_8_4 vr6_8_3 vr6_8_2 vr6_8_1 vr6_8_0 
-vr7_8_15 vr7_8_14 vr7_8_13 vr7_8_12 vr7_8_11 vr7_8_10 vr7_8_9 vr7_8_8 vr7_8_7 vr7_8_6 vr7_8_5 vr7_8_4 vr7_8_3 vr7_8_2 vr7_8_1 vr7_8_0 
-vr8_8_15 vr8_8_14 vr8_8_13 vr8_8_12 vr8_8_11 vr8_8_10 vr8_8_9 vr8_8_8 vr8_8_7 vr8_8_6 vr8_8_5 vr8_8_4 vr8_8_3 vr8_8_2 vr8_8_1 vr8_8_0 
-vr9_8_15 vr9_8_14 vr9_8_13 vr9_8_12 vr9_8_11 vr9_8_10 vr9_8_9 vr9_8_8 vr9_8_7 vr9_8_6 vr9_8_5 vr9_8_4 vr9_8_3 vr9_8_2 vr9_8_1 vr9_8_0 
-vr10_8_15 vr10_8_14 vr10_8_13 vr10_8_12 vr10_8_11 vr10_8_10 vr10_8_9 vr10_8_8 vr10_8_7 vr10_8_6 vr10_8_5 vr10_8_4 vr10_8_3 vr10_8_2 vr10_8_1 vr10_8_0 
-vr11_8_15 vr11_8_14 vr11_8_13 vr11_8_12 vr11_8_11 vr11_8_10 vr11_8_9 vr11_8_8 vr11_8_7 vr11_8_6 vr11_8_5 vr11_8_4 vr11_8_3 vr11_8_2 vr11_8_1 vr11_8_0 
-vr12_8_15 vr12_8_14 vr12_8_13 vr12_8_12 vr12_8_11 vr12_8_10 vr12_8_9 vr12_8_8 vr12_8_7 vr12_8_6 vr12_8_5 vr12_8_4 vr12_8_3 vr12_8_2 vr12_8_1 vr12_8_0 
-vr13_8_15 vr13_8_14 vr13_8_13 vr13_8_12 vr13_8_11 vr13_8_10 vr13_8_9 vr13_8_8 vr13_8_7 vr13_8_6 vr13_8_5 vr13_8_4 vr13_8_3 vr13_8_2 vr13_8_1 vr13_8_0 
-vr14_8_15 vr14_8_14 vr14_8_13 vr14_8_12 vr14_8_11 vr14_8_10 vr14_8_9 vr14_8_8 vr14_8_7 vr14_8_6 vr14_8_5 vr14_8_4 vr14_8_3 vr14_8_2 vr14_8_1 vr14_8_0 
-vr15_8_15 vr15_8_14 vr15_8_13 vr15_8_12 vr15_8_11 vr15_8_10 vr15_8_9 vr15_8_8 vr15_8_7 vr15_8_6 vr15_8_5 vr15_8_4 vr15_8_3 vr15_8_2 vr15_8_1 vr15_8_0 
-vr16_8_15 vr16_8_14 vr16_8_13 vr16_8_12 vr16_8_11 vr16_8_10 vr16_8_9 vr16_8_8 vr16_8_7 vr16_8_6 vr16_8_5 vr16_8_4 vr16_8_3 vr16_8_2 vr16_8_1 vr16_8_0 
-vr17_8_15 vr17_8_14 vr17_8_13 vr17_8_12 vr17_8_11 vr17_8_10 vr17_8_9 vr17_8_8 vr17_8_7 vr17_8_6 vr17_8_5 vr17_8_4 vr17_8_3 vr17_8_2 vr17_8_1 vr17_8_0 
-vr18_8_15 vr18_8_14 vr18_8_13 vr18_8_12 vr18_8_11 vr18_8_10 vr18_8_9 vr18_8_8 vr18_8_7 vr18_8_6 vr18_8_5 vr18_8_4 vr18_8_3 vr18_8_2 vr18_8_1 vr18_8_0 
-vr19_8_15 vr19_8_14 vr19_8_13 vr19_8_12 vr19_8_11 vr19_8_10 vr19_8_9 vr19_8_8 vr19_8_7 vr19_8_6 vr19_8_5 vr19_8_4 vr19_8_3 vr19_8_2 vr19_8_1 vr19_8_0 
-vr20_8_15 vr20_8_14 vr20_8_13 vr20_8_12 vr20_8_11 vr20_8_10 vr20_8_9 vr20_8_8 vr20_8_7 vr20_8_6 vr20_8_5 vr20_8_4 vr20_8_3 vr20_8_2 vr20_8_1 vr20_8_0 
-vr21_8_15 vr21_8_14 vr21_8_13 vr21_8_12 vr21_8_11 vr21_8_10 vr21_8_9 vr21_8_8 vr21_8_7 vr21_8_6 vr21_8_5 vr21_8_4 vr21_8_3 vr21_8_2 vr21_8_1 vr21_8_0 
-vr22_8_15 vr22_8_14 vr22_8_13 vr22_8_12 vr22_8_11 vr22_8_10 vr22_8_9 vr22_8_8 vr22_8_7 vr22_8_6 vr22_8_5 vr22_8_4 vr22_8_3 vr22_8_2 vr22_8_1 vr22_8_0 
-vr23_8_15 vr23_8_14 vr23_8_13 vr23_8_12 vr23_8_11 vr23_8_10 vr23_8_9 vr23_8_8 vr23_8_7 vr23_8_6 vr23_8_5 vr23_8_4 vr23_8_3 vr23_8_2 vr23_8_1 vr23_8_0 
-vr24_8_15 vr24_8_14 vr24_8_13 vr24_8_12 vr24_8_11 vr24_8_10 vr24_8_9 vr24_8_8 vr24_8_7 vr24_8_6 vr24_8_5 vr24_8_4 vr24_8_3 vr24_8_2 vr24_8_1 vr24_8_0 
-vr25_8_15 vr25_8_14 vr25_8_13 vr25_8_12 vr25_8_11 vr25_8_10 vr25_8_9 vr25_8_8 vr25_8_7 vr25_8_6 vr25_8_5 vr25_8_4 vr25_8_3 vr25_8_2 vr25_8_1 vr25_8_0 
-vr26_8_15 vr26_8_14 vr26_8_13 vr26_8_12 vr26_8_11 vr26_8_10 vr26_8_9 vr26_8_8 vr26_8_7 vr26_8_6 vr26_8_5 vr26_8_4 vr26_8_3 vr26_8_2 vr26_8_1 vr26_8_0 
-vr27_8_15 vr27_8_14 vr27_8_13 vr27_8_12 vr27_8_11 vr27_8_10 vr27_8_9 vr27_8_8 vr27_8_7 vr27_8_6 vr27_8_5 vr27_8_4 vr27_8_3 vr27_8_2 vr27_8_1 vr27_8_0 
-vr28_8_15 vr28_8_14 vr28_8_13 vr28_8_12 vr28_8_11 vr28_8_10 vr28_8_9 vr28_8_8 vr28_8_7 vr28_8_6 vr28_8_5 vr28_8_4 vr28_8_3 vr28_8_2 vr28_8_1 vr28_8_0 
-vr29_8_15 vr29_8_14 vr29_8_13 vr29_8_12 vr29_8_11 vr29_8_10 vr29_8_9 vr29_8_8 vr29_8_7 vr29_8_6 vr29_8_5 vr29_8_4 vr29_8_3 vr29_8_2 vr29_8_1 vr29_8_0 
-vr30_8_15 vr30_8_14 vr30_8_13 vr30_8_12 vr30_8_11 vr30_8_10 vr30_8_9 vr30_8_8 vr30_8_7 vr30_8_6 vr30_8_5 vr30_8_4 vr30_8_3 vr30_8_2 vr30_8_1 vr30_8_0 
-vr31_8_15 vr31_8_14 vr31_8_13 vr31_8_12 vr31_8_11 vr31_8_10 vr31_8_9 vr31_8_8 vr31_8_7 vr31_8_6 vr31_8_5 vr31_8_4 vr31_8_3 vr31_8_2 vr31_8_1 vr31_8_0 
-];
-
-@endif
 # Define context bits
 define register offset=0x6000 size=4   contextreg;
 define context contextreg
@@ -682,9 +367,17 @@ define token instr(32)
 	DUIS=(11,20)
 	EX=(0,0)
 	fA=(16,20)
+	ps0A=(16,20)
+	ps1A=(16,20)
 	fB=(11,15)
+	ps0B=(11,15)
+	ps1B=(11,15)
 	fC=(6,10)
+	ps0C=(6,10)
+	ps1C=(6,10)
 	fD=(21,25)
+	ps0D=(21,25)
+	ps1D=(21,25)
 	FM0=(24,24)
 	FM1=(23,23)
 	FM=(17,24)
@@ -696,6 +389,8 @@ define token instr(32)
 	FM7=(17,17)
 	FNC=(11,15)
 	fS=(21,25)
+	ps0S=(21,25)
+	ps1S=(21,25)
 	fT=(21,25)
   I=(12,14)
   IX=(7,9)
@@ -776,196 +471,6 @@ define token instr(32)
 	UIMW=(16,17)
 	UIMT=(16,21)
 
-	vrAR=(16,20)         # AltVect Vector register vrN selector (128 bit)
-	vrAD=(16,20)
-
-	vrA_64_0=(16,20)    # AltVect Vector register vrN selector (64 bit)
-	vrA_64_1=(16,20)
-
-	vrA_32_0=(16,20)    # AltVect Vector register vrN selector (32 bit)
-	vrA_32_1=(16,20)
-	vrA_32_2=(16,20)
-	vrA_32_3=(16,20)
-
-    vrA_16_0=(16,20)    # AltVect Vector register vrN selector (16 bit)
-    vrA_16_1=(16,20)
-    vrA_16_2=(16,20)
-    vrA_16_3=(16,20)
-    vrA_16_4=(16,20)
-    vrA_16_5=(16,20)
-    vrA_16_6=(16,20)
-    vrA_16_7=(16,20)
-
-    vrA_8_0=(16,20)     # AltVect Vector register vrN selector (8 bit)
-    vrA_8_1=(16,20)
-    vrA_8_2=(16,20)
-    vrA_8_3=(16,20)
-    vrA_8_4=(16,20)
-    vrA_8_5=(16,20)
-    vrA_8_6=(16,20)
-    vrA_8_7=(16,20)
-    vrA_8_8=(16,20)
-    vrA_8_9=(16,20)
-    vrA_8_10=(16,20)
-    vrA_8_11=(16,20)
-    vrA_8_12=(16,20)
-    vrA_8_13=(16,20)
-    vrA_8_14=(16,20)
-    vrA_8_15=(16,20)
-
-	vrBR=(11,15)         # AltVect Vector register vrN selector (128 bit)
-	vrBD=(11,15)
-
-	vrB_64_0=(11,15)    # AltVect Vector register vrN selector (64 bit)
-	vrB_64_1=(11,15)
-
-	vrB_32_0=(11,15)    # AltVect Vector register vrN selector (32 bit)
-	vrB_32_1=(11,15)
-	vrB_32_2=(11,15)
-	vrB_32_3=(11,15)
-
-    vrB_16_0=(11,15)    # AltVect Vector register vrN selector (16 bit)
-    vrB_16_1=(11,15)
-    vrB_16_2=(11,15)
-    vrB_16_3=(11,15)
-    vrB_16_4=(11,15)
-    vrB_16_5=(11,15)
-    vrB_16_6=(11,15)
-    vrB_16_7=(11,15)
-
-    vrB_8_0=(11,15)     # AltVect Vector register vrN selector (8 bit)
-    vrB_8_1=(11,15)
-    vrB_8_2=(11,15)
-    vrB_8_3=(11,15)
-    vrB_8_4=(11,15)
-    vrB_8_5=(11,15)
-    vrB_8_6=(11,15)
-    vrB_8_7=(11,15)
-    vrB_8_8=(11,15)
-    vrB_8_9=(11,15)
-    vrB_8_10=(11,15)
-    vrB_8_11=(11,15)
-    vrB_8_12=(11,15)
-    vrB_8_13=(11,15)
-    vrB_8_14=(11,15)
-    vrB_8_15=(11,15)
-
-
-	vrCR=(6,10)         # AltVect Vector register vrN selector (128 bit)
-	vrCD=(6,10)
-
-	vrC_64_0=(6,10)    # AltVect Vector register vrN selector (64 bit)
-	vrC_64_1=(6,10)
-
-	vrC_32_0=(6,10)    # AltVect Vector register vrN selector (32 bit)
-	vrC_32_1=(6,10)
-	vrC_32_2=(6,10)
-	vrC_32_3=(6,10)
-
-    vrC_16_0=(6,10)    # AltVect Vector register vrN selector (16 bit)
-    vrC_16_1=(6,10)
-    vrC_16_2=(6,10)
-    vrC_16_3=(6,10)
-    vrC_16_4=(6,10)
-    vrC_16_5=(6,10)
-    vrC_16_6=(6,10)
-    vrC_16_7=(6,10)
-
-
-    vrC_8_0=(6,10)     # AltVect Vector register vrN selector (8 bit)
-    vrC_8_1=(6,10)
-    vrC_8_2=(6,10)
-    vrC_8_3=(6,10)
-    vrC_8_4=(6,10)
-    vrC_8_5=(6,10)
-    vrC_8_6=(6,10)
-    vrC_8_7=(6,10)
-    vrC_8_8=(6,10)
-    vrC_8_9=(6,10)
-    vrC_8_10=(6,10)
-    vrC_8_11=(6,10)
-    vrC_8_12=(6,10)
-    vrC_8_13=(6,10)
-    vrC_8_14=(6,10)
-    vrC_8_15=(6,10)
-
-
-	vrDR=(21,25)         # AltVect Vector register vrN selector (128 bit)
-	vrDD=(21,25)
-
-	vrD_64_0=(21,25)    # AltVect Vector register vrN selector (64 bit)
-	vrD_64_1=(21,25)
-
-	vrD_32_0=(21,25)    # AltVect Vector register vrN selector (32 bit)
-	vrD_32_1=(21,25)
-	vrD_32_2=(21,25)
-	vrD_32_3=(21,25)
-
-    vrD_16_0=(21,25)    # AltVect Vector register vrN selector (16 bit)
-    vrD_16_1=(21,25)
-    vrD_16_2=(21,25)
-    vrD_16_3=(21,25)
-    vrD_16_4=(21,25)
-    vrD_16_5=(21,25)
-    vrD_16_6=(21,25)
-    vrD_16_7=(21,25)
-
-    vrD_8_0=(21,25)     # AltVect Vector register vrN selector (8 bit)
-    vrD_8_1=(21,25)
-    vrD_8_2=(21,25)
-    vrD_8_3=(21,25)
-    vrD_8_4=(21,25)
-    vrD_8_5=(21,25)
-    vrD_8_6=(21,25)
-    vrD_8_7=(21,25)
-    vrD_8_8=(21,25)
-    vrD_8_9=(21,25)
-    vrD_8_10=(21,25)
-    vrD_8_11=(21,25)
-    vrD_8_12=(21,25)
-    vrD_8_13=(21,25)
-    vrD_8_14=(21,25)
-    vrD_8_15=(21,25)
-
-
-	vrSR=(21,25)         # AltVect Vector register vrN selector (128 bit)
-	vrSD=(21,25)
-
-	vrS_64_0=(21,25)    # AltVect Vector register vrN selector (64 bit)
-	vrS_64_1=(21,25)
-
-	vrS_32_0=(21,25)    # AltVect Vector register vrN selector (32 bit)
-	vrS_32_1=(21,25)
-	vrS_32_2=(21,25)
-	vrS_32_3=(21,25)
-
-    vrS_16_0=(21,25)    # AltVect Vector register vrN selector (16 bit)
-    vrS_16_1=(21,25)
-    vrS_16_2=(21,25)
-    vrS_16_3=(21,25)
-    vrS_16_4=(21,25)
-    vrS_16_5=(21,25)
-    vrS_16_6=(21,25)
-    vrS_16_7=(21,25)
-
-    vrS_8_0=(21,25)     # AltVect Vector register vrN selector (8 bit)
-    vrS_8_1=(21,25)
-    vrS_8_2=(21,25)
-    vrS_8_3=(21,25)
-    vrS_8_4=(21,25)
-    vrS_8_5=(21,25)
-    vrS_8_6=(21,25)
-    vrS_8_7=(21,25)
-    vrS_8_8=(21,25)
-    vrS_8_9=(21,25)
-    vrS_8_10=(21,25)
-    vrS_8_11=(21,25)
-    vrS_8_12=(21,25)
-    vrS_8_13=(21,25)
-    vrS_8_14=(21,25)
-    vrS_8_15=(21,25)
-
-
   W=(15,15)
   WX=(10,10)
 	WC=(21,22)
@@ -986,19 +491,6 @@ define token instr(32)
 	XOP_3_10=(3,10)
 	XOP_3_9=(3,9)
 	XOP_7_10=(7,10)
-# support VSX args
-	Avsa=(16,20)
-	Avsb=(16,20)
-	Bvsa=(11,15)
-	Bvsb=(11,15)
-	Cvsa=(6,10)
-	Cvsb=(6,10)
-	Svsa=(21,25)
-	Svsb=(21,25)
-	Svsbx=(21,25)
-	Tvsa=(21,25)
-	Tvsb=(21,25)
-	Tvsbx=(21,25)
 	
 	BD15_VLE=(1,15) signed
 	BD24_VLE=(1,24) signed
@@ -1061,11 +553,6 @@ EVUIMM_2_RAt:       val^"("^A^")"	    is A & EVUIMM_2	[ val = EVUIMM_2*2; ]	{ tm
 EVUIMM_4_RAt:       val^"("^A^")"	    is A & EVUIMM_4	[ val = EVUIMM_4*4; ]	{ tmp:4 = A+(EVUIMM_4*4); export tmp; }
 EVUIMM_8_RAt:       val^"("^A^")"	    is A & EVUIMM_8	[ val = EVUIMM_8*8; ]	{ tmp:4 = A+(EVUIMM_8*8); export tmp; }
 
-attach variables [ T ]
-	[ vs0    vs1   vs2   vs3   vs4   vs5   vs6   vs7   vs8   vs9  vs10  vs11  vs12  vs13  vs14  vs15  
-      vs16  vs17  vs18  vs19  vs20  vs21  vs22  vs23  vs24  vs25  vs26  vs27  vs28  vs29  vs30  vs31 
-    ];
-
 attach variables [ RX_VLE RY_VLE RZ_VLE]
 	[ r0 r1 r2 r3 r4 r5 r6 r7 r24 r25 r26 r27 r28 r29 r30 r31];
 
@@ -1087,6 +574,19 @@ attach variables [ fD fB fA fC fS fT ]
                    f8  f9  f10 f11 f12 f13 f14 f15
                    f16 f17 f18 f19 f20 f21 f22 f23
                    f24 f25 f26 f27 f28 f29 f30 f31 ];
+
+# Paired singles (individual components)
+attach variables [ ps0D ps0B ps0A ps0C ps0S ]
+                 [  ps0_0  ps1_0  ps2_0  ps3_0  ps4_0  ps5_0  ps6_0  ps7_0
+                    ps8_0  ps9_0 ps10_0 ps11_0 ps12_0 ps13_0 ps14_0 ps15_0
+                   ps16_0 ps17_0 ps18_0 ps19_0 ps20_0 ps21_0 ps22_0 ps23_0
+                   ps24_0 ps25_0 ps26_0 ps27_0 ps28_0 ps29_0 ps30_0 ps31_0 ];
+
+attach variables [ ps1D ps1B ps1A ps1C ps1S ]
+                 [  ps0_1  ps1_1  ps2_1  ps3_1  ps4_1  ps5_1  ps6_1  ps7_1
+                    ps8_1  ps9_1 ps10_1 ps11_1 ps12_1 ps13_1 ps14_1 ps15_1
+                   ps16_1 ps17_1 ps18_1 ps19_1 ps20_1 ps21_1 ps22_1 ps23_1
+                   ps24_1 ps25_1 ps26_1 ps27_1 ps28_1 ps29_1 ps30_1 ps31_1 ];
 
 attach variables [ CRBD CRBR ]
          [ fp_fx 		fp_fex 		fp_vx 		fp_ox
@@ -1187,225 +687,6 @@ attach variables DCRN [
 	dcr01f	dcr03f	dcr05f	dcr07f	dcr09f	dcr0bf	dcr0df	dcr0ff	dcr11f  dcr13f	dcr15f	dcr17f	dcr19f	dcr1bf	dcr1df	dcr1ff	dcr21f	dcr23f	dcr25f	dcr27f	dcr29f	dcr2bf	dcr2df	dcr2ff	dcr31f	dcr33f	dcr35f	dcr37f	dcr39f	dcr3bf	dcr3df	dcr3ff
 ];
 
-attach variables [vrDR vrAR vrBR vrSR vrCR]
-	[  vs32  vs33  vs34  vs35  vs36  vs37  vs38  vs39  vs40  vs41  vs42  vs43  vs44  vs45  vs46  vs47  
-       vs48  vs49  vs50  vs51  vs52  vs53  vs54  vs55  vs56  vs57  vs58  vs59  vs60  vs61  vs62  vs63 ];
-       
-## These attaches are for the Altivec instructions
-attach names [ vrDD vrAD vrBD vrSD vrCD]
-    [ v0  v1  v2  v3  v4  v5  v6  v7  v8  v9  v10 v11 v12 v13 v14 v15
-      v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27 v28 v29 v30 v31 ];
-      
-vrD: vrDD	is vrDD & vrDR { export vrDR; }      
-vrA: vrAD	is vrAD & vrAR { export vrAR; }      
-vrB: vrBD	is vrBD & vrBR { export vrBR; }      
-vrC: vrCD	is vrCD & vrCR { export vrCR; }      
-vrS: vrSD	is vrSD & vrSR { export vrSR; }      
-
-# AltVect Vector vrD sub-piece selectors 
-
-# AltVect Vector vrD sub-piece selectors for size 64
-attach variables vrD_64_0 [vr0_64_0 vr1_64_0 vr2_64_0 vr3_64_0 vr4_64_0 vr5_64_0 vr6_64_0 vr7_64_0 vr8_64_0 vr9_64_0 vr10_64_0 vr11_64_0 vr12_64_0 vr13_64_0 vr14_64_0 vr15_64_0 vr16_64_0 vr17_64_0 vr18_64_0 vr19_64_0 vr20_64_0 vr21_64_0 vr22_64_0 vr23_64_0 vr24_64_0 vr25_64_0 vr26_64_0 vr27_64_0 vr28_64_0 vr29_64_0 vr30_64_0 vr31_64_0 ];
-attach variables vrD_64_1 [vr0_64_1 vr1_64_1 vr2_64_1 vr3_64_1 vr4_64_1 vr5_64_1 vr6_64_1 vr7_64_1 vr8_64_1 vr9_64_1 vr10_64_1 vr11_64_1 vr12_64_1 vr13_64_1 vr14_64_1 vr15_64_1 vr16_64_1 vr17_64_1 vr18_64_1 vr19_64_1 vr20_64_1 vr21_64_1 vr22_64_1 vr23_64_1 vr24_64_1 vr25_64_1 vr26_64_1 vr27_64_1 vr28_64_1 vr29_64_1 vr30_64_1 vr31_64_1 ];
-
-# AltVect Vector vrD sub-piece selectors for size 32
-attach variables vrD_32_0 [vr0_32_0 vr1_32_0 vr2_32_0 vr3_32_0 vr4_32_0 vr5_32_0 vr6_32_0 vr7_32_0 vr8_32_0 vr9_32_0 vr10_32_0 vr11_32_0 vr12_32_0 vr13_32_0 vr14_32_0 vr15_32_0 vr16_32_0 vr17_32_0 vr18_32_0 vr19_32_0 vr20_32_0 vr21_32_0 vr22_32_0 vr23_32_0 vr24_32_0 vr25_32_0 vr26_32_0 vr27_32_0 vr28_32_0 vr29_32_0 vr30_32_0 vr31_32_0 ];
-attach variables vrD_32_1 [vr0_32_1 vr1_32_1 vr2_32_1 vr3_32_1 vr4_32_1 vr5_32_1 vr6_32_1 vr7_32_1 vr8_32_1 vr9_32_1 vr10_32_1 vr11_32_1 vr12_32_1 vr13_32_1 vr14_32_1 vr15_32_1 vr16_32_1 vr17_32_1 vr18_32_1 vr19_32_1 vr20_32_1 vr21_32_1 vr22_32_1 vr23_32_1 vr24_32_1 vr25_32_1 vr26_32_1 vr27_32_1 vr28_32_1 vr29_32_1 vr30_32_1 vr31_32_1 ];
-attach variables vrD_32_2 [vr0_32_2 vr1_32_2 vr2_32_2 vr3_32_2 vr4_32_2 vr5_32_2 vr6_32_2 vr7_32_2 vr8_32_2 vr9_32_2 vr10_32_2 vr11_32_2 vr12_32_2 vr13_32_2 vr14_32_2 vr15_32_2 vr16_32_2 vr17_32_2 vr18_32_2 vr19_32_2 vr20_32_2 vr21_32_2 vr22_32_2 vr23_32_2 vr24_32_2 vr25_32_2 vr26_32_2 vr27_32_2 vr28_32_2 vr29_32_2 vr30_32_2 vr31_32_2 ];
-attach variables vrD_32_3 [vr0_32_3 vr1_32_3 vr2_32_3 vr3_32_3 vr4_32_3 vr5_32_3 vr6_32_3 vr7_32_3 vr8_32_3 vr9_32_3 vr10_32_3 vr11_32_3 vr12_32_3 vr13_32_3 vr14_32_3 vr15_32_3 vr16_32_3 vr17_32_3 vr18_32_3 vr19_32_3 vr20_32_3 vr21_32_3 vr22_32_3 vr23_32_3 vr24_32_3 vr25_32_3 vr26_32_3 vr27_32_3 vr28_32_3 vr29_32_3 vr30_32_3 vr31_32_3 ];
-
-# AltVect Vector vrD sub-piece selectors for size 16
-attach variables vrD_16_0 [vr0_16_0 vr1_16_0 vr2_16_0 vr3_16_0 vr4_16_0 vr5_16_0 vr6_16_0 vr7_16_0 vr8_16_0 vr9_16_0 vr10_16_0 vr11_16_0 vr12_16_0 vr13_16_0 vr14_16_0 vr15_16_0 vr16_16_0 vr17_16_0 vr18_16_0 vr19_16_0 vr20_16_0 vr21_16_0 vr22_16_0 vr23_16_0 vr24_16_0 vr25_16_0 vr26_16_0 vr27_16_0 vr28_16_0 vr29_16_0 vr30_16_0 vr31_16_0 ];
-attach variables vrD_16_1 [vr0_16_1 vr1_16_1 vr2_16_1 vr3_16_1 vr4_16_1 vr5_16_1 vr6_16_1 vr7_16_1 vr8_16_1 vr9_16_1 vr10_16_1 vr11_16_1 vr12_16_1 vr13_16_1 vr14_16_1 vr15_16_1 vr16_16_1 vr17_16_1 vr18_16_1 vr19_16_1 vr20_16_1 vr21_16_1 vr22_16_1 vr23_16_1 vr24_16_1 vr25_16_1 vr26_16_1 vr27_16_1 vr28_16_1 vr29_16_1 vr30_16_1 vr31_16_1 ];
-attach variables vrD_16_2 [vr0_16_2 vr1_16_2 vr2_16_2 vr3_16_2 vr4_16_2 vr5_16_2 vr6_16_2 vr7_16_2 vr8_16_2 vr9_16_2 vr10_16_2 vr11_16_2 vr12_16_2 vr13_16_2 vr14_16_2 vr15_16_2 vr16_16_2 vr17_16_2 vr18_16_2 vr19_16_2 vr20_16_2 vr21_16_2 vr22_16_2 vr23_16_2 vr24_16_2 vr25_16_2 vr26_16_2 vr27_16_2 vr28_16_2 vr29_16_2 vr30_16_2 vr31_16_2 ];
-attach variables vrD_16_3 [vr0_16_3 vr1_16_3 vr2_16_3 vr3_16_3 vr4_16_3 vr5_16_3 vr6_16_3 vr7_16_3 vr8_16_3 vr9_16_3 vr10_16_3 vr11_16_3 vr12_16_3 vr13_16_3 vr14_16_3 vr15_16_3 vr16_16_3 vr17_16_3 vr18_16_3 vr19_16_3 vr20_16_3 vr21_16_3 vr22_16_3 vr23_16_3 vr24_16_3 vr25_16_3 vr26_16_3 vr27_16_3 vr28_16_3 vr29_16_3 vr30_16_3 vr31_16_3 ];
-attach variables vrD_16_4 [vr0_16_4 vr1_16_4 vr2_16_4 vr3_16_4 vr4_16_4 vr5_16_4 vr6_16_4 vr7_16_4 vr8_16_4 vr9_16_4 vr10_16_4 vr11_16_4 vr12_16_4 vr13_16_4 vr14_16_4 vr15_16_4 vr16_16_4 vr17_16_4 vr18_16_4 vr19_16_4 vr20_16_4 vr21_16_4 vr22_16_4 vr23_16_4 vr24_16_4 vr25_16_4 vr26_16_4 vr27_16_4 vr28_16_4 vr29_16_4 vr30_16_4 vr31_16_4 ];
-attach variables vrD_16_5 [vr0_16_5 vr1_16_5 vr2_16_5 vr3_16_5 vr4_16_5 vr5_16_5 vr6_16_5 vr7_16_5 vr8_16_5 vr9_16_5 vr10_16_5 vr11_16_5 vr12_16_5 vr13_16_5 vr14_16_5 vr15_16_5 vr16_16_5 vr17_16_5 vr18_16_5 vr19_16_5 vr20_16_5 vr21_16_5 vr22_16_5 vr23_16_5 vr24_16_5 vr25_16_5 vr26_16_5 vr27_16_5 vr28_16_5 vr29_16_5 vr30_16_5 vr31_16_5 ];
-attach variables vrD_16_6 [vr0_16_6 vr1_16_6 vr2_16_6 vr3_16_6 vr4_16_6 vr5_16_6 vr6_16_6 vr7_16_6 vr8_16_6 vr9_16_6 vr10_16_6 vr11_16_6 vr12_16_6 vr13_16_6 vr14_16_6 vr15_16_6 vr16_16_6 vr17_16_6 vr18_16_6 vr19_16_6 vr20_16_6 vr21_16_6 vr22_16_6 vr23_16_6 vr24_16_6 vr25_16_6 vr26_16_6 vr27_16_6 vr28_16_6 vr29_16_6 vr30_16_6 vr31_16_6 ];
-attach variables vrD_16_7 [vr0_16_7 vr1_16_7 vr2_16_7 vr3_16_7 vr4_16_7 vr5_16_7 vr6_16_7 vr7_16_7 vr8_16_7 vr9_16_7 vr10_16_7 vr11_16_7 vr12_16_7 vr13_16_7 vr14_16_7 vr15_16_7 vr16_16_7 vr17_16_7 vr18_16_7 vr19_16_7 vr20_16_7 vr21_16_7 vr22_16_7 vr23_16_7 vr24_16_7 vr25_16_7 vr26_16_7 vr27_16_7 vr28_16_7 vr29_16_7 vr30_16_7 vr31_16_7 ];
-
-# AltVect Vector vrD sub-piece selectors for size 8
-attach variables vrD_8_0 [vr0_8_0 vr1_8_0 vr2_8_0 vr3_8_0 vr4_8_0 vr5_8_0 vr6_8_0 vr7_8_0 vr8_8_0 vr9_8_0 vr10_8_0 vr11_8_0 vr12_8_0 vr13_8_0 vr14_8_0 vr15_8_0 vr16_8_0 vr17_8_0 vr18_8_0 vr19_8_0 vr20_8_0 vr21_8_0 vr22_8_0 vr23_8_0 vr24_8_0 vr25_8_0 vr26_8_0 vr27_8_0 vr28_8_0 vr29_8_0 vr30_8_0 vr31_8_0 ];
-attach variables vrD_8_1 [vr0_8_1 vr1_8_1 vr2_8_1 vr3_8_1 vr4_8_1 vr5_8_1 vr6_8_1 vr7_8_1 vr8_8_1 vr9_8_1 vr10_8_1 vr11_8_1 vr12_8_1 vr13_8_1 vr14_8_1 vr15_8_1 vr16_8_1 vr17_8_1 vr18_8_1 vr19_8_1 vr20_8_1 vr21_8_1 vr22_8_1 vr23_8_1 vr24_8_1 vr25_8_1 vr26_8_1 vr27_8_1 vr28_8_1 vr29_8_1 vr30_8_1 vr31_8_1 ];
-attach variables vrD_8_2 [vr0_8_2 vr1_8_2 vr2_8_2 vr3_8_2 vr4_8_2 vr5_8_2 vr6_8_2 vr7_8_2 vr8_8_2 vr9_8_2 vr10_8_2 vr11_8_2 vr12_8_2 vr13_8_2 vr14_8_2 vr15_8_2 vr16_8_2 vr17_8_2 vr18_8_2 vr19_8_2 vr20_8_2 vr21_8_2 vr22_8_2 vr23_8_2 vr24_8_2 vr25_8_2 vr26_8_2 vr27_8_2 vr28_8_2 vr29_8_2 vr30_8_2 vr31_8_2 ];
-attach variables vrD_8_3 [vr0_8_3 vr1_8_3 vr2_8_3 vr3_8_3 vr4_8_3 vr5_8_3 vr6_8_3 vr7_8_3 vr8_8_3 vr9_8_3 vr10_8_3 vr11_8_3 vr12_8_3 vr13_8_3 vr14_8_3 vr15_8_3 vr16_8_3 vr17_8_3 vr18_8_3 vr19_8_3 vr20_8_3 vr21_8_3 vr22_8_3 vr23_8_3 vr24_8_3 vr25_8_3 vr26_8_3 vr27_8_3 vr28_8_3 vr29_8_3 vr30_8_3 vr31_8_3 ];
-attach variables vrD_8_4 [vr0_8_4 vr1_8_4 vr2_8_4 vr3_8_4 vr4_8_4 vr5_8_4 vr6_8_4 vr7_8_4 vr8_8_4 vr9_8_4 vr10_8_4 vr11_8_4 vr12_8_4 vr13_8_4 vr14_8_4 vr15_8_4 vr16_8_4 vr17_8_4 vr18_8_4 vr19_8_4 vr20_8_4 vr21_8_4 vr22_8_4 vr23_8_4 vr24_8_4 vr25_8_4 vr26_8_4 vr27_8_4 vr28_8_4 vr29_8_4 vr30_8_4 vr31_8_4 ];
-attach variables vrD_8_5 [vr0_8_5 vr1_8_5 vr2_8_5 vr3_8_5 vr4_8_5 vr5_8_5 vr6_8_5 vr7_8_5 vr8_8_5 vr9_8_5 vr10_8_5 vr11_8_5 vr12_8_5 vr13_8_5 vr14_8_5 vr15_8_5 vr16_8_5 vr17_8_5 vr18_8_5 vr19_8_5 vr20_8_5 vr21_8_5 vr22_8_5 vr23_8_5 vr24_8_5 vr25_8_5 vr26_8_5 vr27_8_5 vr28_8_5 vr29_8_5 vr30_8_5 vr31_8_5 ];
-attach variables vrD_8_6 [vr0_8_6 vr1_8_6 vr2_8_6 vr3_8_6 vr4_8_6 vr5_8_6 vr6_8_6 vr7_8_6 vr8_8_6 vr9_8_6 vr10_8_6 vr11_8_6 vr12_8_6 vr13_8_6 vr14_8_6 vr15_8_6 vr16_8_6 vr17_8_6 vr18_8_6 vr19_8_6 vr20_8_6 vr21_8_6 vr22_8_6 vr23_8_6 vr24_8_6 vr25_8_6 vr26_8_6 vr27_8_6 vr28_8_6 vr29_8_6 vr30_8_6 vr31_8_6 ];
-attach variables vrD_8_7 [vr0_8_7 vr1_8_7 vr2_8_7 vr3_8_7 vr4_8_7 vr5_8_7 vr6_8_7 vr7_8_7 vr8_8_7 vr9_8_7 vr10_8_7 vr11_8_7 vr12_8_7 vr13_8_7 vr14_8_7 vr15_8_7 vr16_8_7 vr17_8_7 vr18_8_7 vr19_8_7 vr20_8_7 vr21_8_7 vr22_8_7 vr23_8_7 vr24_8_7 vr25_8_7 vr26_8_7 vr27_8_7 vr28_8_7 vr29_8_7 vr30_8_7 vr31_8_7 ];
-attach variables vrD_8_8 [vr0_8_8 vr1_8_8 vr2_8_8 vr3_8_8 vr4_8_8 vr5_8_8 vr6_8_8 vr7_8_8 vr8_8_8 vr9_8_8 vr10_8_8 vr11_8_8 vr12_8_8 vr13_8_8 vr14_8_8 vr15_8_8 vr16_8_8 vr17_8_8 vr18_8_8 vr19_8_8 vr20_8_8 vr21_8_8 vr22_8_8 vr23_8_8 vr24_8_8 vr25_8_8 vr26_8_8 vr27_8_8 vr28_8_8 vr29_8_8 vr30_8_8 vr31_8_8 ];
-attach variables vrD_8_9 [vr0_8_9 vr1_8_9 vr2_8_9 vr3_8_9 vr4_8_9 vr5_8_9 vr6_8_9 vr7_8_9 vr8_8_9 vr9_8_9 vr10_8_9 vr11_8_9 vr12_8_9 vr13_8_9 vr14_8_9 vr15_8_9 vr16_8_9 vr17_8_9 vr18_8_9 vr19_8_9 vr20_8_9 vr21_8_9 vr22_8_9 vr23_8_9 vr24_8_9 vr25_8_9 vr26_8_9 vr27_8_9 vr28_8_9 vr29_8_9 vr30_8_9 vr31_8_9 ];
-attach variables vrD_8_10 [vr0_8_10 vr1_8_10 vr2_8_10 vr3_8_10 vr4_8_10 vr5_8_10 vr6_8_10 vr7_8_10 vr8_8_10 vr9_8_10 vr10_8_10 vr11_8_10 vr12_8_10 vr13_8_10 vr14_8_10 vr15_8_10 vr16_8_10 vr17_8_10 vr18_8_10 vr19_8_10 vr20_8_10 vr21_8_10 vr22_8_10 vr23_8_10 vr24_8_10 vr25_8_10 vr26_8_10 vr27_8_10 vr28_8_10 vr29_8_10 vr30_8_10 vr31_8_10 ];
-attach variables vrD_8_11 [vr0_8_11 vr1_8_11 vr2_8_11 vr3_8_11 vr4_8_11 vr5_8_11 vr6_8_11 vr7_8_11 vr8_8_11 vr9_8_11 vr10_8_11 vr11_8_11 vr12_8_11 vr13_8_11 vr14_8_11 vr15_8_11 vr16_8_11 vr17_8_11 vr18_8_11 vr19_8_11 vr20_8_11 vr21_8_11 vr22_8_11 vr23_8_11 vr24_8_11 vr25_8_11 vr26_8_11 vr27_8_11 vr28_8_11 vr29_8_11 vr30_8_11 vr31_8_11 ];
-attach variables vrD_8_12 [vr0_8_12 vr1_8_12 vr2_8_12 vr3_8_12 vr4_8_12 vr5_8_12 vr6_8_12 vr7_8_12 vr8_8_12 vr9_8_12 vr10_8_12 vr11_8_12 vr12_8_12 vr13_8_12 vr14_8_12 vr15_8_12 vr16_8_12 vr17_8_12 vr18_8_12 vr19_8_12 vr20_8_12 vr21_8_12 vr22_8_12 vr23_8_12 vr24_8_12 vr25_8_12 vr26_8_12 vr27_8_12 vr28_8_12 vr29_8_12 vr30_8_12 vr31_8_12 ];
-attach variables vrD_8_13 [vr0_8_13 vr1_8_13 vr2_8_13 vr3_8_13 vr4_8_13 vr5_8_13 vr6_8_13 vr7_8_13 vr8_8_13 vr9_8_13 vr10_8_13 vr11_8_13 vr12_8_13 vr13_8_13 vr14_8_13 vr15_8_13 vr16_8_13 vr17_8_13 vr18_8_13 vr19_8_13 vr20_8_13 vr21_8_13 vr22_8_13 vr23_8_13 vr24_8_13 vr25_8_13 vr26_8_13 vr27_8_13 vr28_8_13 vr29_8_13 vr30_8_13 vr31_8_13 ];
-attach variables vrD_8_14 [vr0_8_14 vr1_8_14 vr2_8_14 vr3_8_14 vr4_8_14 vr5_8_14 vr6_8_14 vr7_8_14 vr8_8_14 vr9_8_14 vr10_8_14 vr11_8_14 vr12_8_14 vr13_8_14 vr14_8_14 vr15_8_14 vr16_8_14 vr17_8_14 vr18_8_14 vr19_8_14 vr20_8_14 vr21_8_14 vr22_8_14 vr23_8_14 vr24_8_14 vr25_8_14 vr26_8_14 vr27_8_14 vr28_8_14 vr29_8_14 vr30_8_14 vr31_8_14 ];
-attach variables vrD_8_15 [vr0_8_15 vr1_8_15 vr2_8_15 vr3_8_15 vr4_8_15 vr5_8_15 vr6_8_15 vr7_8_15 vr8_8_15 vr9_8_15 vr10_8_15 vr11_8_15 vr12_8_15 vr13_8_15 vr14_8_15 vr15_8_15 vr16_8_15 vr17_8_15 vr18_8_15 vr19_8_15 vr20_8_15 vr21_8_15 vr22_8_15 vr23_8_15 vr24_8_15 vr25_8_15 vr26_8_15 vr27_8_15 vr28_8_15 vr29_8_15 vr30_8_15 vr31_8_15 ];
-
-
-# AltVect Vector vrA sub-piece selectors 
-
-# AltVect Vector vrA sub-piece selectors for size 64
-attach variables vrA_64_0 [vr0_64_0 vr1_64_0 vr2_64_0 vr3_64_0 vr4_64_0 vr5_64_0 vr6_64_0 vr7_64_0 vr8_64_0 vr9_64_0 vr10_64_0 vr11_64_0 vr12_64_0 vr13_64_0 vr14_64_0 vr15_64_0 vr16_64_0 vr17_64_0 vr18_64_0 vr19_64_0 vr20_64_0 vr21_64_0 vr22_64_0 vr23_64_0 vr24_64_0 vr25_64_0 vr26_64_0 vr27_64_0 vr28_64_0 vr29_64_0 vr30_64_0 vr31_64_0 ];
-attach variables vrA_64_1 [vr0_64_1 vr1_64_1 vr2_64_1 vr3_64_1 vr4_64_1 vr5_64_1 vr6_64_1 vr7_64_1 vr8_64_1 vr9_64_1 vr10_64_1 vr11_64_1 vr12_64_1 vr13_64_1 vr14_64_1 vr15_64_1 vr16_64_1 vr17_64_1 vr18_64_1 vr19_64_1 vr20_64_1 vr21_64_1 vr22_64_1 vr23_64_1 vr24_64_1 vr25_64_1 vr26_64_1 vr27_64_1 vr28_64_1 vr29_64_1 vr30_64_1 vr31_64_1 ];
-
-# AltVect Vector vrA sub-piece selectors for size 32
-attach variables vrA_32_0 [vr0_32_0 vr1_32_0 vr2_32_0 vr3_32_0 vr4_32_0 vr5_32_0 vr6_32_0 vr7_32_0 vr8_32_0 vr9_32_0 vr10_32_0 vr11_32_0 vr12_32_0 vr13_32_0 vr14_32_0 vr15_32_0 vr16_32_0 vr17_32_0 vr18_32_0 vr19_32_0 vr20_32_0 vr21_32_0 vr22_32_0 vr23_32_0 vr24_32_0 vr25_32_0 vr26_32_0 vr27_32_0 vr28_32_0 vr29_32_0 vr30_32_0 vr31_32_0 ];
-attach variables vrA_32_1 [vr0_32_1 vr1_32_1 vr2_32_1 vr3_32_1 vr4_32_1 vr5_32_1 vr6_32_1 vr7_32_1 vr8_32_1 vr9_32_1 vr10_32_1 vr11_32_1 vr12_32_1 vr13_32_1 vr14_32_1 vr15_32_1 vr16_32_1 vr17_32_1 vr18_32_1 vr19_32_1 vr20_32_1 vr21_32_1 vr22_32_1 vr23_32_1 vr24_32_1 vr25_32_1 vr26_32_1 vr27_32_1 vr28_32_1 vr29_32_1 vr30_32_1 vr31_32_1 ];
-attach variables vrA_32_2 [vr0_32_2 vr1_32_2 vr2_32_2 vr3_32_2 vr4_32_2 vr5_32_2 vr6_32_2 vr7_32_2 vr8_32_2 vr9_32_2 vr10_32_2 vr11_32_2 vr12_32_2 vr13_32_2 vr14_32_2 vr15_32_2 vr16_32_2 vr17_32_2 vr18_32_2 vr19_32_2 vr20_32_2 vr21_32_2 vr22_32_2 vr23_32_2 vr24_32_2 vr25_32_2 vr26_32_2 vr27_32_2 vr28_32_2 vr29_32_2 vr30_32_2 vr31_32_2 ];
-attach variables vrA_32_3 [vr0_32_3 vr1_32_3 vr2_32_3 vr3_32_3 vr4_32_3 vr5_32_3 vr6_32_3 vr7_32_3 vr8_32_3 vr9_32_3 vr10_32_3 vr11_32_3 vr12_32_3 vr13_32_3 vr14_32_3 vr15_32_3 vr16_32_3 vr17_32_3 vr18_32_3 vr19_32_3 vr20_32_3 vr21_32_3 vr22_32_3 vr23_32_3 vr24_32_3 vr25_32_3 vr26_32_3 vr27_32_3 vr28_32_3 vr29_32_3 vr30_32_3 vr31_32_3 ];
-
-# AltVect Vector vrA sub-piece selectors for size 16
-attach variables vrA_16_0 [vr0_16_0 vr1_16_0 vr2_16_0 vr3_16_0 vr4_16_0 vr5_16_0 vr6_16_0 vr7_16_0 vr8_16_0 vr9_16_0 vr10_16_0 vr11_16_0 vr12_16_0 vr13_16_0 vr14_16_0 vr15_16_0 vr16_16_0 vr17_16_0 vr18_16_0 vr19_16_0 vr20_16_0 vr21_16_0 vr22_16_0 vr23_16_0 vr24_16_0 vr25_16_0 vr26_16_0 vr27_16_0 vr28_16_0 vr29_16_0 vr30_16_0 vr31_16_0 ];
-attach variables vrA_16_1 [vr0_16_1 vr1_16_1 vr2_16_1 vr3_16_1 vr4_16_1 vr5_16_1 vr6_16_1 vr7_16_1 vr8_16_1 vr9_16_1 vr10_16_1 vr11_16_1 vr12_16_1 vr13_16_1 vr14_16_1 vr15_16_1 vr16_16_1 vr17_16_1 vr18_16_1 vr19_16_1 vr20_16_1 vr21_16_1 vr22_16_1 vr23_16_1 vr24_16_1 vr25_16_1 vr26_16_1 vr27_16_1 vr28_16_1 vr29_16_1 vr30_16_1 vr31_16_1 ];
-attach variables vrA_16_2 [vr0_16_2 vr1_16_2 vr2_16_2 vr3_16_2 vr4_16_2 vr5_16_2 vr6_16_2 vr7_16_2 vr8_16_2 vr9_16_2 vr10_16_2 vr11_16_2 vr12_16_2 vr13_16_2 vr14_16_2 vr15_16_2 vr16_16_2 vr17_16_2 vr18_16_2 vr19_16_2 vr20_16_2 vr21_16_2 vr22_16_2 vr23_16_2 vr24_16_2 vr25_16_2 vr26_16_2 vr27_16_2 vr28_16_2 vr29_16_2 vr30_16_2 vr31_16_2 ];
-attach variables vrA_16_3 [vr0_16_3 vr1_16_3 vr2_16_3 vr3_16_3 vr4_16_3 vr5_16_3 vr6_16_3 vr7_16_3 vr8_16_3 vr9_16_3 vr10_16_3 vr11_16_3 vr12_16_3 vr13_16_3 vr14_16_3 vr15_16_3 vr16_16_3 vr17_16_3 vr18_16_3 vr19_16_3 vr20_16_3 vr21_16_3 vr22_16_3 vr23_16_3 vr24_16_3 vr25_16_3 vr26_16_3 vr27_16_3 vr28_16_3 vr29_16_3 vr30_16_3 vr31_16_3 ];
-attach variables vrA_16_4 [vr0_16_4 vr1_16_4 vr2_16_4 vr3_16_4 vr4_16_4 vr5_16_4 vr6_16_4 vr7_16_4 vr8_16_4 vr9_16_4 vr10_16_4 vr11_16_4 vr12_16_4 vr13_16_4 vr14_16_4 vr15_16_4 vr16_16_4 vr17_16_4 vr18_16_4 vr19_16_4 vr20_16_4 vr21_16_4 vr22_16_4 vr23_16_4 vr24_16_4 vr25_16_4 vr26_16_4 vr27_16_4 vr28_16_4 vr29_16_4 vr30_16_4 vr31_16_4 ];
-attach variables vrA_16_5 [vr0_16_5 vr1_16_5 vr2_16_5 vr3_16_5 vr4_16_5 vr5_16_5 vr6_16_5 vr7_16_5 vr8_16_5 vr9_16_5 vr10_16_5 vr11_16_5 vr12_16_5 vr13_16_5 vr14_16_5 vr15_16_5 vr16_16_5 vr17_16_5 vr18_16_5 vr19_16_5 vr20_16_5 vr21_16_5 vr22_16_5 vr23_16_5 vr24_16_5 vr25_16_5 vr26_16_5 vr27_16_5 vr28_16_5 vr29_16_5 vr30_16_5 vr31_16_5 ];
-attach variables vrA_16_6 [vr0_16_6 vr1_16_6 vr2_16_6 vr3_16_6 vr4_16_6 vr5_16_6 vr6_16_6 vr7_16_6 vr8_16_6 vr9_16_6 vr10_16_6 vr11_16_6 vr12_16_6 vr13_16_6 vr14_16_6 vr15_16_6 vr16_16_6 vr17_16_6 vr18_16_6 vr19_16_6 vr20_16_6 vr21_16_6 vr22_16_6 vr23_16_6 vr24_16_6 vr25_16_6 vr26_16_6 vr27_16_6 vr28_16_6 vr29_16_6 vr30_16_6 vr31_16_6 ];
-attach variables vrA_16_7 [vr0_16_7 vr1_16_7 vr2_16_7 vr3_16_7 vr4_16_7 vr5_16_7 vr6_16_7 vr7_16_7 vr8_16_7 vr9_16_7 vr10_16_7 vr11_16_7 vr12_16_7 vr13_16_7 vr14_16_7 vr15_16_7 vr16_16_7 vr17_16_7 vr18_16_7 vr19_16_7 vr20_16_7 vr21_16_7 vr22_16_7 vr23_16_7 vr24_16_7 vr25_16_7 vr26_16_7 vr27_16_7 vr28_16_7 vr29_16_7 vr30_16_7 vr31_16_7 ];
-
-# AltVect Vector vrA sub-piece selectors for size 8
-attach variables vrA_8_0 [vr0_8_0 vr1_8_0 vr2_8_0 vr3_8_0 vr4_8_0 vr5_8_0 vr6_8_0 vr7_8_0 vr8_8_0 vr9_8_0 vr10_8_0 vr11_8_0 vr12_8_0 vr13_8_0 vr14_8_0 vr15_8_0 vr16_8_0 vr17_8_0 vr18_8_0 vr19_8_0 vr20_8_0 vr21_8_0 vr22_8_0 vr23_8_0 vr24_8_0 vr25_8_0 vr26_8_0 vr27_8_0 vr28_8_0 vr29_8_0 vr30_8_0 vr31_8_0 ];
-attach variables vrA_8_1 [vr0_8_1 vr1_8_1 vr2_8_1 vr3_8_1 vr4_8_1 vr5_8_1 vr6_8_1 vr7_8_1 vr8_8_1 vr9_8_1 vr10_8_1 vr11_8_1 vr12_8_1 vr13_8_1 vr14_8_1 vr15_8_1 vr16_8_1 vr17_8_1 vr18_8_1 vr19_8_1 vr20_8_1 vr21_8_1 vr22_8_1 vr23_8_1 vr24_8_1 vr25_8_1 vr26_8_1 vr27_8_1 vr28_8_1 vr29_8_1 vr30_8_1 vr31_8_1 ];
-attach variables vrA_8_2 [vr0_8_2 vr1_8_2 vr2_8_2 vr3_8_2 vr4_8_2 vr5_8_2 vr6_8_2 vr7_8_2 vr8_8_2 vr9_8_2 vr10_8_2 vr11_8_2 vr12_8_2 vr13_8_2 vr14_8_2 vr15_8_2 vr16_8_2 vr17_8_2 vr18_8_2 vr19_8_2 vr20_8_2 vr21_8_2 vr22_8_2 vr23_8_2 vr24_8_2 vr25_8_2 vr26_8_2 vr27_8_2 vr28_8_2 vr29_8_2 vr30_8_2 vr31_8_2 ];
-attach variables vrA_8_3 [vr0_8_3 vr1_8_3 vr2_8_3 vr3_8_3 vr4_8_3 vr5_8_3 vr6_8_3 vr7_8_3 vr8_8_3 vr9_8_3 vr10_8_3 vr11_8_3 vr12_8_3 vr13_8_3 vr14_8_3 vr15_8_3 vr16_8_3 vr17_8_3 vr18_8_3 vr19_8_3 vr20_8_3 vr21_8_3 vr22_8_3 vr23_8_3 vr24_8_3 vr25_8_3 vr26_8_3 vr27_8_3 vr28_8_3 vr29_8_3 vr30_8_3 vr31_8_3 ];
-attach variables vrA_8_4 [vr0_8_4 vr1_8_4 vr2_8_4 vr3_8_4 vr4_8_4 vr5_8_4 vr6_8_4 vr7_8_4 vr8_8_4 vr9_8_4 vr10_8_4 vr11_8_4 vr12_8_4 vr13_8_4 vr14_8_4 vr15_8_4 vr16_8_4 vr17_8_4 vr18_8_4 vr19_8_4 vr20_8_4 vr21_8_4 vr22_8_4 vr23_8_4 vr24_8_4 vr25_8_4 vr26_8_4 vr27_8_4 vr28_8_4 vr29_8_4 vr30_8_4 vr31_8_4 ];
-attach variables vrA_8_5 [vr0_8_5 vr1_8_5 vr2_8_5 vr3_8_5 vr4_8_5 vr5_8_5 vr6_8_5 vr7_8_5 vr8_8_5 vr9_8_5 vr10_8_5 vr11_8_5 vr12_8_5 vr13_8_5 vr14_8_5 vr15_8_5 vr16_8_5 vr17_8_5 vr18_8_5 vr19_8_5 vr20_8_5 vr21_8_5 vr22_8_5 vr23_8_5 vr24_8_5 vr25_8_5 vr26_8_5 vr27_8_5 vr28_8_5 vr29_8_5 vr30_8_5 vr31_8_5 ];
-attach variables vrA_8_6 [vr0_8_6 vr1_8_6 vr2_8_6 vr3_8_6 vr4_8_6 vr5_8_6 vr6_8_6 vr7_8_6 vr8_8_6 vr9_8_6 vr10_8_6 vr11_8_6 vr12_8_6 vr13_8_6 vr14_8_6 vr15_8_6 vr16_8_6 vr17_8_6 vr18_8_6 vr19_8_6 vr20_8_6 vr21_8_6 vr22_8_6 vr23_8_6 vr24_8_6 vr25_8_6 vr26_8_6 vr27_8_6 vr28_8_6 vr29_8_6 vr30_8_6 vr31_8_6 ];
-attach variables vrA_8_7 [vr0_8_7 vr1_8_7 vr2_8_7 vr3_8_7 vr4_8_7 vr5_8_7 vr6_8_7 vr7_8_7 vr8_8_7 vr9_8_7 vr10_8_7 vr11_8_7 vr12_8_7 vr13_8_7 vr14_8_7 vr15_8_7 vr16_8_7 vr17_8_7 vr18_8_7 vr19_8_7 vr20_8_7 vr21_8_7 vr22_8_7 vr23_8_7 vr24_8_7 vr25_8_7 vr26_8_7 vr27_8_7 vr28_8_7 vr29_8_7 vr30_8_7 vr31_8_7 ];
-attach variables vrA_8_8 [vr0_8_8 vr1_8_8 vr2_8_8 vr3_8_8 vr4_8_8 vr5_8_8 vr6_8_8 vr7_8_8 vr8_8_8 vr9_8_8 vr10_8_8 vr11_8_8 vr12_8_8 vr13_8_8 vr14_8_8 vr15_8_8 vr16_8_8 vr17_8_8 vr18_8_8 vr19_8_8 vr20_8_8 vr21_8_8 vr22_8_8 vr23_8_8 vr24_8_8 vr25_8_8 vr26_8_8 vr27_8_8 vr28_8_8 vr29_8_8 vr30_8_8 vr31_8_8 ];
-attach variables vrA_8_9 [vr0_8_9 vr1_8_9 vr2_8_9 vr3_8_9 vr4_8_9 vr5_8_9 vr6_8_9 vr7_8_9 vr8_8_9 vr9_8_9 vr10_8_9 vr11_8_9 vr12_8_9 vr13_8_9 vr14_8_9 vr15_8_9 vr16_8_9 vr17_8_9 vr18_8_9 vr19_8_9 vr20_8_9 vr21_8_9 vr22_8_9 vr23_8_9 vr24_8_9 vr25_8_9 vr26_8_9 vr27_8_9 vr28_8_9 vr29_8_9 vr30_8_9 vr31_8_9 ];
-attach variables vrA_8_10 [vr0_8_10 vr1_8_10 vr2_8_10 vr3_8_10 vr4_8_10 vr5_8_10 vr6_8_10 vr7_8_10 vr8_8_10 vr9_8_10 vr10_8_10 vr11_8_10 vr12_8_10 vr13_8_10 vr14_8_10 vr15_8_10 vr16_8_10 vr17_8_10 vr18_8_10 vr19_8_10 vr20_8_10 vr21_8_10 vr22_8_10 vr23_8_10 vr24_8_10 vr25_8_10 vr26_8_10 vr27_8_10 vr28_8_10 vr29_8_10 vr30_8_10 vr31_8_10 ];
-attach variables vrA_8_11 [vr0_8_11 vr1_8_11 vr2_8_11 vr3_8_11 vr4_8_11 vr5_8_11 vr6_8_11 vr7_8_11 vr8_8_11 vr9_8_11 vr10_8_11 vr11_8_11 vr12_8_11 vr13_8_11 vr14_8_11 vr15_8_11 vr16_8_11 vr17_8_11 vr18_8_11 vr19_8_11 vr20_8_11 vr21_8_11 vr22_8_11 vr23_8_11 vr24_8_11 vr25_8_11 vr26_8_11 vr27_8_11 vr28_8_11 vr29_8_11 vr30_8_11 vr31_8_11 ];
-attach variables vrA_8_12 [vr0_8_12 vr1_8_12 vr2_8_12 vr3_8_12 vr4_8_12 vr5_8_12 vr6_8_12 vr7_8_12 vr8_8_12 vr9_8_12 vr10_8_12 vr11_8_12 vr12_8_12 vr13_8_12 vr14_8_12 vr15_8_12 vr16_8_12 vr17_8_12 vr18_8_12 vr19_8_12 vr20_8_12 vr21_8_12 vr22_8_12 vr23_8_12 vr24_8_12 vr25_8_12 vr26_8_12 vr27_8_12 vr28_8_12 vr29_8_12 vr30_8_12 vr31_8_12 ];
-attach variables vrA_8_13 [vr0_8_13 vr1_8_13 vr2_8_13 vr3_8_13 vr4_8_13 vr5_8_13 vr6_8_13 vr7_8_13 vr8_8_13 vr9_8_13 vr10_8_13 vr11_8_13 vr12_8_13 vr13_8_13 vr14_8_13 vr15_8_13 vr16_8_13 vr17_8_13 vr18_8_13 vr19_8_13 vr20_8_13 vr21_8_13 vr22_8_13 vr23_8_13 vr24_8_13 vr25_8_13 vr26_8_13 vr27_8_13 vr28_8_13 vr29_8_13 vr30_8_13 vr31_8_13 ];
-attach variables vrA_8_14 [vr0_8_14 vr1_8_14 vr2_8_14 vr3_8_14 vr4_8_14 vr5_8_14 vr6_8_14 vr7_8_14 vr8_8_14 vr9_8_14 vr10_8_14 vr11_8_14 vr12_8_14 vr13_8_14 vr14_8_14 vr15_8_14 vr16_8_14 vr17_8_14 vr18_8_14 vr19_8_14 vr20_8_14 vr21_8_14 vr22_8_14 vr23_8_14 vr24_8_14 vr25_8_14 vr26_8_14 vr27_8_14 vr28_8_14 vr29_8_14 vr30_8_14 vr31_8_14 ];
-attach variables vrA_8_15 [vr0_8_15 vr1_8_15 vr2_8_15 vr3_8_15 vr4_8_15 vr5_8_15 vr6_8_15 vr7_8_15 vr8_8_15 vr9_8_15 vr10_8_15 vr11_8_15 vr12_8_15 vr13_8_15 vr14_8_15 vr15_8_15 vr16_8_15 vr17_8_15 vr18_8_15 vr19_8_15 vr20_8_15 vr21_8_15 vr22_8_15 vr23_8_15 vr24_8_15 vr25_8_15 vr26_8_15 vr27_8_15 vr28_8_15 vr29_8_15 vr30_8_15 vr31_8_15 ];
-
-
-# AltVect Vector vrB sub-piece selectors 
-
-# AltVect Vector vrB sub-piece selectors for size 64
-attach variables vrB_64_0 [vr0_64_0 vr1_64_0 vr2_64_0 vr3_64_0 vr4_64_0 vr5_64_0 vr6_64_0 vr7_64_0 vr8_64_0 vr9_64_0 vr10_64_0 vr11_64_0 vr12_64_0 vr13_64_0 vr14_64_0 vr15_64_0 vr16_64_0 vr17_64_0 vr18_64_0 vr19_64_0 vr20_64_0 vr21_64_0 vr22_64_0 vr23_64_0 vr24_64_0 vr25_64_0 vr26_64_0 vr27_64_0 vr28_64_0 vr29_64_0 vr30_64_0 vr31_64_0 ];
-attach variables vrB_64_1 [vr0_64_1 vr1_64_1 vr2_64_1 vr3_64_1 vr4_64_1 vr5_64_1 vr6_64_1 vr7_64_1 vr8_64_1 vr9_64_1 vr10_64_1 vr11_64_1 vr12_64_1 vr13_64_1 vr14_64_1 vr15_64_1 vr16_64_1 vr17_64_1 vr18_64_1 vr19_64_1 vr20_64_1 vr21_64_1 vr22_64_1 vr23_64_1 vr24_64_1 vr25_64_1 vr26_64_1 vr27_64_1 vr28_64_1 vr29_64_1 vr30_64_1 vr31_64_1 ];
-
-# AltVect Vector vrB sub-piece selectors for size 32
-attach variables vrB_32_0 [vr0_32_0 vr1_32_0 vr2_32_0 vr3_32_0 vr4_32_0 vr5_32_0 vr6_32_0 vr7_32_0 vr8_32_0 vr9_32_0 vr10_32_0 vr11_32_0 vr12_32_0 vr13_32_0 vr14_32_0 vr15_32_0 vr16_32_0 vr17_32_0 vr18_32_0 vr19_32_0 vr20_32_0 vr21_32_0 vr22_32_0 vr23_32_0 vr24_32_0 vr25_32_0 vr26_32_0 vr27_32_0 vr28_32_0 vr29_32_0 vr30_32_0 vr31_32_0 ];
-attach variables vrB_32_1 [vr0_32_1 vr1_32_1 vr2_32_1 vr3_32_1 vr4_32_1 vr5_32_1 vr6_32_1 vr7_32_1 vr8_32_1 vr9_32_1 vr10_32_1 vr11_32_1 vr12_32_1 vr13_32_1 vr14_32_1 vr15_32_1 vr16_32_1 vr17_32_1 vr18_32_1 vr19_32_1 vr20_32_1 vr21_32_1 vr22_32_1 vr23_32_1 vr24_32_1 vr25_32_1 vr26_32_1 vr27_32_1 vr28_32_1 vr29_32_1 vr30_32_1 vr31_32_1 ];
-attach variables vrB_32_2 [vr0_32_2 vr1_32_2 vr2_32_2 vr3_32_2 vr4_32_2 vr5_32_2 vr6_32_2 vr7_32_2 vr8_32_2 vr9_32_2 vr10_32_2 vr11_32_2 vr12_32_2 vr13_32_2 vr14_32_2 vr15_32_2 vr16_32_2 vr17_32_2 vr18_32_2 vr19_32_2 vr20_32_2 vr21_32_2 vr22_32_2 vr23_32_2 vr24_32_2 vr25_32_2 vr26_32_2 vr27_32_2 vr28_32_2 vr29_32_2 vr30_32_2 vr31_32_2 ];
-attach variables vrB_32_3 [vr0_32_3 vr1_32_3 vr2_32_3 vr3_32_3 vr4_32_3 vr5_32_3 vr6_32_3 vr7_32_3 vr8_32_3 vr9_32_3 vr10_32_3 vr11_32_3 vr12_32_3 vr13_32_3 vr14_32_3 vr15_32_3 vr16_32_3 vr17_32_3 vr18_32_3 vr19_32_3 vr20_32_3 vr21_32_3 vr22_32_3 vr23_32_3 vr24_32_3 vr25_32_3 vr26_32_3 vr27_32_3 vr28_32_3 vr29_32_3 vr30_32_3 vr31_32_3 ];
-
-# AltVect Vector vrB sub-piece selectors for size 16
-attach variables vrB_16_0 [vr0_16_0 vr1_16_0 vr2_16_0 vr3_16_0 vr4_16_0 vr5_16_0 vr6_16_0 vr7_16_0 vr8_16_0 vr9_16_0 vr10_16_0 vr11_16_0 vr12_16_0 vr13_16_0 vr14_16_0 vr15_16_0 vr16_16_0 vr17_16_0 vr18_16_0 vr19_16_0 vr20_16_0 vr21_16_0 vr22_16_0 vr23_16_0 vr24_16_0 vr25_16_0 vr26_16_0 vr27_16_0 vr28_16_0 vr29_16_0 vr30_16_0 vr31_16_0 ];
-attach variables vrB_16_1 [vr0_16_1 vr1_16_1 vr2_16_1 vr3_16_1 vr4_16_1 vr5_16_1 vr6_16_1 vr7_16_1 vr8_16_1 vr9_16_1 vr10_16_1 vr11_16_1 vr12_16_1 vr13_16_1 vr14_16_1 vr15_16_1 vr16_16_1 vr17_16_1 vr18_16_1 vr19_16_1 vr20_16_1 vr21_16_1 vr22_16_1 vr23_16_1 vr24_16_1 vr25_16_1 vr26_16_1 vr27_16_1 vr28_16_1 vr29_16_1 vr30_16_1 vr31_16_1 ];
-attach variables vrB_16_2 [vr0_16_2 vr1_16_2 vr2_16_2 vr3_16_2 vr4_16_2 vr5_16_2 vr6_16_2 vr7_16_2 vr8_16_2 vr9_16_2 vr10_16_2 vr11_16_2 vr12_16_2 vr13_16_2 vr14_16_2 vr15_16_2 vr16_16_2 vr17_16_2 vr18_16_2 vr19_16_2 vr20_16_2 vr21_16_2 vr22_16_2 vr23_16_2 vr24_16_2 vr25_16_2 vr26_16_2 vr27_16_2 vr28_16_2 vr29_16_2 vr30_16_2 vr31_16_2 ];
-attach variables vrB_16_3 [vr0_16_3 vr1_16_3 vr2_16_3 vr3_16_3 vr4_16_3 vr5_16_3 vr6_16_3 vr7_16_3 vr8_16_3 vr9_16_3 vr10_16_3 vr11_16_3 vr12_16_3 vr13_16_3 vr14_16_3 vr15_16_3 vr16_16_3 vr17_16_3 vr18_16_3 vr19_16_3 vr20_16_3 vr21_16_3 vr22_16_3 vr23_16_3 vr24_16_3 vr25_16_3 vr26_16_3 vr27_16_3 vr28_16_3 vr29_16_3 vr30_16_3 vr31_16_3 ];
-attach variables vrB_16_4 [vr0_16_4 vr1_16_4 vr2_16_4 vr3_16_4 vr4_16_4 vr5_16_4 vr6_16_4 vr7_16_4 vr8_16_4 vr9_16_4 vr10_16_4 vr11_16_4 vr12_16_4 vr13_16_4 vr14_16_4 vr15_16_4 vr16_16_4 vr17_16_4 vr18_16_4 vr19_16_4 vr20_16_4 vr21_16_4 vr22_16_4 vr23_16_4 vr24_16_4 vr25_16_4 vr26_16_4 vr27_16_4 vr28_16_4 vr29_16_4 vr30_16_4 vr31_16_4 ];
-attach variables vrB_16_5 [vr0_16_5 vr1_16_5 vr2_16_5 vr3_16_5 vr4_16_5 vr5_16_5 vr6_16_5 vr7_16_5 vr8_16_5 vr9_16_5 vr10_16_5 vr11_16_5 vr12_16_5 vr13_16_5 vr14_16_5 vr15_16_5 vr16_16_5 vr17_16_5 vr18_16_5 vr19_16_5 vr20_16_5 vr21_16_5 vr22_16_5 vr23_16_5 vr24_16_5 vr25_16_5 vr26_16_5 vr27_16_5 vr28_16_5 vr29_16_5 vr30_16_5 vr31_16_5 ];
-attach variables vrB_16_6 [vr0_16_6 vr1_16_6 vr2_16_6 vr3_16_6 vr4_16_6 vr5_16_6 vr6_16_6 vr7_16_6 vr8_16_6 vr9_16_6 vr10_16_6 vr11_16_6 vr12_16_6 vr13_16_6 vr14_16_6 vr15_16_6 vr16_16_6 vr17_16_6 vr18_16_6 vr19_16_6 vr20_16_6 vr21_16_6 vr22_16_6 vr23_16_6 vr24_16_6 vr25_16_6 vr26_16_6 vr27_16_6 vr28_16_6 vr29_16_6 vr30_16_6 vr31_16_6 ];
-attach variables vrB_16_7 [vr0_16_7 vr1_16_7 vr2_16_7 vr3_16_7 vr4_16_7 vr5_16_7 vr6_16_7 vr7_16_7 vr8_16_7 vr9_16_7 vr10_16_7 vr11_16_7 vr12_16_7 vr13_16_7 vr14_16_7 vr15_16_7 vr16_16_7 vr17_16_7 vr18_16_7 vr19_16_7 vr20_16_7 vr21_16_7 vr22_16_7 vr23_16_7 vr24_16_7 vr25_16_7 vr26_16_7 vr27_16_7 vr28_16_7 vr29_16_7 vr30_16_7 vr31_16_7 ];
-
-# AltVect Vector vrB sub-piece selectors for size 8
-attach variables vrB_8_0 [vr0_8_0 vr1_8_0 vr2_8_0 vr3_8_0 vr4_8_0 vr5_8_0 vr6_8_0 vr7_8_0 vr8_8_0 vr9_8_0 vr10_8_0 vr11_8_0 vr12_8_0 vr13_8_0 vr14_8_0 vr15_8_0 vr16_8_0 vr17_8_0 vr18_8_0 vr19_8_0 vr20_8_0 vr21_8_0 vr22_8_0 vr23_8_0 vr24_8_0 vr25_8_0 vr26_8_0 vr27_8_0 vr28_8_0 vr29_8_0 vr30_8_0 vr31_8_0 ];
-attach variables vrB_8_1 [vr0_8_1 vr1_8_1 vr2_8_1 vr3_8_1 vr4_8_1 vr5_8_1 vr6_8_1 vr7_8_1 vr8_8_1 vr9_8_1 vr10_8_1 vr11_8_1 vr12_8_1 vr13_8_1 vr14_8_1 vr15_8_1 vr16_8_1 vr17_8_1 vr18_8_1 vr19_8_1 vr20_8_1 vr21_8_1 vr22_8_1 vr23_8_1 vr24_8_1 vr25_8_1 vr26_8_1 vr27_8_1 vr28_8_1 vr29_8_1 vr30_8_1 vr31_8_1 ];
-attach variables vrB_8_2 [vr0_8_2 vr1_8_2 vr2_8_2 vr3_8_2 vr4_8_2 vr5_8_2 vr6_8_2 vr7_8_2 vr8_8_2 vr9_8_2 vr10_8_2 vr11_8_2 vr12_8_2 vr13_8_2 vr14_8_2 vr15_8_2 vr16_8_2 vr17_8_2 vr18_8_2 vr19_8_2 vr20_8_2 vr21_8_2 vr22_8_2 vr23_8_2 vr24_8_2 vr25_8_2 vr26_8_2 vr27_8_2 vr28_8_2 vr29_8_2 vr30_8_2 vr31_8_2 ];
-attach variables vrB_8_3 [vr0_8_3 vr1_8_3 vr2_8_3 vr3_8_3 vr4_8_3 vr5_8_3 vr6_8_3 vr7_8_3 vr8_8_3 vr9_8_3 vr10_8_3 vr11_8_3 vr12_8_3 vr13_8_3 vr14_8_3 vr15_8_3 vr16_8_3 vr17_8_3 vr18_8_3 vr19_8_3 vr20_8_3 vr21_8_3 vr22_8_3 vr23_8_3 vr24_8_3 vr25_8_3 vr26_8_3 vr27_8_3 vr28_8_3 vr29_8_3 vr30_8_3 vr31_8_3 ];
-attach variables vrB_8_4 [vr0_8_4 vr1_8_4 vr2_8_4 vr3_8_4 vr4_8_4 vr5_8_4 vr6_8_4 vr7_8_4 vr8_8_4 vr9_8_4 vr10_8_4 vr11_8_4 vr12_8_4 vr13_8_4 vr14_8_4 vr15_8_4 vr16_8_4 vr17_8_4 vr18_8_4 vr19_8_4 vr20_8_4 vr21_8_4 vr22_8_4 vr23_8_4 vr24_8_4 vr25_8_4 vr26_8_4 vr27_8_4 vr28_8_4 vr29_8_4 vr30_8_4 vr31_8_4 ];
-attach variables vrB_8_5 [vr0_8_5 vr1_8_5 vr2_8_5 vr3_8_5 vr4_8_5 vr5_8_5 vr6_8_5 vr7_8_5 vr8_8_5 vr9_8_5 vr10_8_5 vr11_8_5 vr12_8_5 vr13_8_5 vr14_8_5 vr15_8_5 vr16_8_5 vr17_8_5 vr18_8_5 vr19_8_5 vr20_8_5 vr21_8_5 vr22_8_5 vr23_8_5 vr24_8_5 vr25_8_5 vr26_8_5 vr27_8_5 vr28_8_5 vr29_8_5 vr30_8_5 vr31_8_5 ];
-attach variables vrB_8_6 [vr0_8_6 vr1_8_6 vr2_8_6 vr3_8_6 vr4_8_6 vr5_8_6 vr6_8_6 vr7_8_6 vr8_8_6 vr9_8_6 vr10_8_6 vr11_8_6 vr12_8_6 vr13_8_6 vr14_8_6 vr15_8_6 vr16_8_6 vr17_8_6 vr18_8_6 vr19_8_6 vr20_8_6 vr21_8_6 vr22_8_6 vr23_8_6 vr24_8_6 vr25_8_6 vr26_8_6 vr27_8_6 vr28_8_6 vr29_8_6 vr30_8_6 vr31_8_6 ];
-attach variables vrB_8_7 [vr0_8_7 vr1_8_7 vr2_8_7 vr3_8_7 vr4_8_7 vr5_8_7 vr6_8_7 vr7_8_7 vr8_8_7 vr9_8_7 vr10_8_7 vr11_8_7 vr12_8_7 vr13_8_7 vr14_8_7 vr15_8_7 vr16_8_7 vr17_8_7 vr18_8_7 vr19_8_7 vr20_8_7 vr21_8_7 vr22_8_7 vr23_8_7 vr24_8_7 vr25_8_7 vr26_8_7 vr27_8_7 vr28_8_7 vr29_8_7 vr30_8_7 vr31_8_7 ];
-attach variables vrB_8_8 [vr0_8_8 vr1_8_8 vr2_8_8 vr3_8_8 vr4_8_8 vr5_8_8 vr6_8_8 vr7_8_8 vr8_8_8 vr9_8_8 vr10_8_8 vr11_8_8 vr12_8_8 vr13_8_8 vr14_8_8 vr15_8_8 vr16_8_8 vr17_8_8 vr18_8_8 vr19_8_8 vr20_8_8 vr21_8_8 vr22_8_8 vr23_8_8 vr24_8_8 vr25_8_8 vr26_8_8 vr27_8_8 vr28_8_8 vr29_8_8 vr30_8_8 vr31_8_8 ];
-attach variables vrB_8_9 [vr0_8_9 vr1_8_9 vr2_8_9 vr3_8_9 vr4_8_9 vr5_8_9 vr6_8_9 vr7_8_9 vr8_8_9 vr9_8_9 vr10_8_9 vr11_8_9 vr12_8_9 vr13_8_9 vr14_8_9 vr15_8_9 vr16_8_9 vr17_8_9 vr18_8_9 vr19_8_9 vr20_8_9 vr21_8_9 vr22_8_9 vr23_8_9 vr24_8_9 vr25_8_9 vr26_8_9 vr27_8_9 vr28_8_9 vr29_8_9 vr30_8_9 vr31_8_9 ];
-attach variables vrB_8_10 [vr0_8_10 vr1_8_10 vr2_8_10 vr3_8_10 vr4_8_10 vr5_8_10 vr6_8_10 vr7_8_10 vr8_8_10 vr9_8_10 vr10_8_10 vr11_8_10 vr12_8_10 vr13_8_10 vr14_8_10 vr15_8_10 vr16_8_10 vr17_8_10 vr18_8_10 vr19_8_10 vr20_8_10 vr21_8_10 vr22_8_10 vr23_8_10 vr24_8_10 vr25_8_10 vr26_8_10 vr27_8_10 vr28_8_10 vr29_8_10 vr30_8_10 vr31_8_10 ];
-attach variables vrB_8_11 [vr0_8_11 vr1_8_11 vr2_8_11 vr3_8_11 vr4_8_11 vr5_8_11 vr6_8_11 vr7_8_11 vr8_8_11 vr9_8_11 vr10_8_11 vr11_8_11 vr12_8_11 vr13_8_11 vr14_8_11 vr15_8_11 vr16_8_11 vr17_8_11 vr18_8_11 vr19_8_11 vr20_8_11 vr21_8_11 vr22_8_11 vr23_8_11 vr24_8_11 vr25_8_11 vr26_8_11 vr27_8_11 vr28_8_11 vr29_8_11 vr30_8_11 vr31_8_11 ];
-attach variables vrB_8_12 [vr0_8_12 vr1_8_12 vr2_8_12 vr3_8_12 vr4_8_12 vr5_8_12 vr6_8_12 vr7_8_12 vr8_8_12 vr9_8_12 vr10_8_12 vr11_8_12 vr12_8_12 vr13_8_12 vr14_8_12 vr15_8_12 vr16_8_12 vr17_8_12 vr18_8_12 vr19_8_12 vr20_8_12 vr21_8_12 vr22_8_12 vr23_8_12 vr24_8_12 vr25_8_12 vr26_8_12 vr27_8_12 vr28_8_12 vr29_8_12 vr30_8_12 vr31_8_12 ];
-attach variables vrB_8_13 [vr0_8_13 vr1_8_13 vr2_8_13 vr3_8_13 vr4_8_13 vr5_8_13 vr6_8_13 vr7_8_13 vr8_8_13 vr9_8_13 vr10_8_13 vr11_8_13 vr12_8_13 vr13_8_13 vr14_8_13 vr15_8_13 vr16_8_13 vr17_8_13 vr18_8_13 vr19_8_13 vr20_8_13 vr21_8_13 vr22_8_13 vr23_8_13 vr24_8_13 vr25_8_13 vr26_8_13 vr27_8_13 vr28_8_13 vr29_8_13 vr30_8_13 vr31_8_13 ];
-attach variables vrB_8_14 [vr0_8_14 vr1_8_14 vr2_8_14 vr3_8_14 vr4_8_14 vr5_8_14 vr6_8_14 vr7_8_14 vr8_8_14 vr9_8_14 vr10_8_14 vr11_8_14 vr12_8_14 vr13_8_14 vr14_8_14 vr15_8_14 vr16_8_14 vr17_8_14 vr18_8_14 vr19_8_14 vr20_8_14 vr21_8_14 vr22_8_14 vr23_8_14 vr24_8_14 vr25_8_14 vr26_8_14 vr27_8_14 vr28_8_14 vr29_8_14 vr30_8_14 vr31_8_14 ];
-attach variables vrB_8_15 [vr0_8_15 vr1_8_15 vr2_8_15 vr3_8_15 vr4_8_15 vr5_8_15 vr6_8_15 vr7_8_15 vr8_8_15 vr9_8_15 vr10_8_15 vr11_8_15 vr12_8_15 vr13_8_15 vr14_8_15 vr15_8_15 vr16_8_15 vr17_8_15 vr18_8_15 vr19_8_15 vr20_8_15 vr21_8_15 vr22_8_15 vr23_8_15 vr24_8_15 vr25_8_15 vr26_8_15 vr27_8_15 vr28_8_15 vr29_8_15 vr30_8_15 vr31_8_15 ];
-
-
-# AltVect Vector vrS sub-piece selectors 
-
-# AltVect Vector vrS sub-piece selectors for size 64
-attach variables vrS_64_0 [vr0_64_0 vr1_64_0 vr2_64_0 vr3_64_0 vr4_64_0 vr5_64_0 vr6_64_0 vr7_64_0 vr8_64_0 vr9_64_0 vr10_64_0 vr11_64_0 vr12_64_0 vr13_64_0 vr14_64_0 vr15_64_0 vr16_64_0 vr17_64_0 vr18_64_0 vr19_64_0 vr20_64_0 vr21_64_0 vr22_64_0 vr23_64_0 vr24_64_0 vr25_64_0 vr26_64_0 vr27_64_0 vr28_64_0 vr29_64_0 vr30_64_0 vr31_64_0 ];
-attach variables vrS_64_1 [vr0_64_1 vr1_64_1 vr2_64_1 vr3_64_1 vr4_64_1 vr5_64_1 vr6_64_1 vr7_64_1 vr8_64_1 vr9_64_1 vr10_64_1 vr11_64_1 vr12_64_1 vr13_64_1 vr14_64_1 vr15_64_1 vr16_64_1 vr17_64_1 vr18_64_1 vr19_64_1 vr20_64_1 vr21_64_1 vr22_64_1 vr23_64_1 vr24_64_1 vr25_64_1 vr26_64_1 vr27_64_1 vr28_64_1 vr29_64_1 vr30_64_1 vr31_64_1 ];
-
-# AltVect Vector vrS sub-piece selectors for size 32
-attach variables vrS_32_0 [vr0_32_0 vr1_32_0 vr2_32_0 vr3_32_0 vr4_32_0 vr5_32_0 vr6_32_0 vr7_32_0 vr8_32_0 vr9_32_0 vr10_32_0 vr11_32_0 vr12_32_0 vr13_32_0 vr14_32_0 vr15_32_0 vr16_32_0 vr17_32_0 vr18_32_0 vr19_32_0 vr20_32_0 vr21_32_0 vr22_32_0 vr23_32_0 vr24_32_0 vr25_32_0 vr26_32_0 vr27_32_0 vr28_32_0 vr29_32_0 vr30_32_0 vr31_32_0 ];
-attach variables vrS_32_1 [vr0_32_1 vr1_32_1 vr2_32_1 vr3_32_1 vr4_32_1 vr5_32_1 vr6_32_1 vr7_32_1 vr8_32_1 vr9_32_1 vr10_32_1 vr11_32_1 vr12_32_1 vr13_32_1 vr14_32_1 vr15_32_1 vr16_32_1 vr17_32_1 vr18_32_1 vr19_32_1 vr20_32_1 vr21_32_1 vr22_32_1 vr23_32_1 vr24_32_1 vr25_32_1 vr26_32_1 vr27_32_1 vr28_32_1 vr29_32_1 vr30_32_1 vr31_32_1 ];
-attach variables vrS_32_2 [vr0_32_2 vr1_32_2 vr2_32_2 vr3_32_2 vr4_32_2 vr5_32_2 vr6_32_2 vr7_32_2 vr8_32_2 vr9_32_2 vr10_32_2 vr11_32_2 vr12_32_2 vr13_32_2 vr14_32_2 vr15_32_2 vr16_32_2 vr17_32_2 vr18_32_2 vr19_32_2 vr20_32_2 vr21_32_2 vr22_32_2 vr23_32_2 vr24_32_2 vr25_32_2 vr26_32_2 vr27_32_2 vr28_32_2 vr29_32_2 vr30_32_2 vr31_32_2 ];
-attach variables vrS_32_3 [vr0_32_3 vr1_32_3 vr2_32_3 vr3_32_3 vr4_32_3 vr5_32_3 vr6_32_3 vr7_32_3 vr8_32_3 vr9_32_3 vr10_32_3 vr11_32_3 vr12_32_3 vr13_32_3 vr14_32_3 vr15_32_3 vr16_32_3 vr17_32_3 vr18_32_3 vr19_32_3 vr20_32_3 vr21_32_3 vr22_32_3 vr23_32_3 vr24_32_3 vr25_32_3 vr26_32_3 vr27_32_3 vr28_32_3 vr29_32_3 vr30_32_3 vr31_32_3 ];
-
-# AltVect Vector vrS sub-piece selectors for size 16
-attach variables vrS_16_0 [vr0_16_0 vr1_16_0 vr2_16_0 vr3_16_0 vr4_16_0 vr5_16_0 vr6_16_0 vr7_16_0 vr8_16_0 vr9_16_0 vr10_16_0 vr11_16_0 vr12_16_0 vr13_16_0 vr14_16_0 vr15_16_0 vr16_16_0 vr17_16_0 vr18_16_0 vr19_16_0 vr20_16_0 vr21_16_0 vr22_16_0 vr23_16_0 vr24_16_0 vr25_16_0 vr26_16_0 vr27_16_0 vr28_16_0 vr29_16_0 vr30_16_0 vr31_16_0 ];
-attach variables vrS_16_1 [vr0_16_1 vr1_16_1 vr2_16_1 vr3_16_1 vr4_16_1 vr5_16_1 vr6_16_1 vr7_16_1 vr8_16_1 vr9_16_1 vr10_16_1 vr11_16_1 vr12_16_1 vr13_16_1 vr14_16_1 vr15_16_1 vr16_16_1 vr17_16_1 vr18_16_1 vr19_16_1 vr20_16_1 vr21_16_1 vr22_16_1 vr23_16_1 vr24_16_1 vr25_16_1 vr26_16_1 vr27_16_1 vr28_16_1 vr29_16_1 vr30_16_1 vr31_16_1 ];
-attach variables vrS_16_2 [vr0_16_2 vr1_16_2 vr2_16_2 vr3_16_2 vr4_16_2 vr5_16_2 vr6_16_2 vr7_16_2 vr8_16_2 vr9_16_2 vr10_16_2 vr11_16_2 vr12_16_2 vr13_16_2 vr14_16_2 vr15_16_2 vr16_16_2 vr17_16_2 vr18_16_2 vr19_16_2 vr20_16_2 vr21_16_2 vr22_16_2 vr23_16_2 vr24_16_2 vr25_16_2 vr26_16_2 vr27_16_2 vr28_16_2 vr29_16_2 vr30_16_2 vr31_16_2 ];
-attach variables vrS_16_3 [vr0_16_3 vr1_16_3 vr2_16_3 vr3_16_3 vr4_16_3 vr5_16_3 vr6_16_3 vr7_16_3 vr8_16_3 vr9_16_3 vr10_16_3 vr11_16_3 vr12_16_3 vr13_16_3 vr14_16_3 vr15_16_3 vr16_16_3 vr17_16_3 vr18_16_3 vr19_16_3 vr20_16_3 vr21_16_3 vr22_16_3 vr23_16_3 vr24_16_3 vr25_16_3 vr26_16_3 vr27_16_3 vr28_16_3 vr29_16_3 vr30_16_3 vr31_16_3 ];
-attach variables vrS_16_4 [vr0_16_4 vr1_16_4 vr2_16_4 vr3_16_4 vr4_16_4 vr5_16_4 vr6_16_4 vr7_16_4 vr8_16_4 vr9_16_4 vr10_16_4 vr11_16_4 vr12_16_4 vr13_16_4 vr14_16_4 vr15_16_4 vr16_16_4 vr17_16_4 vr18_16_4 vr19_16_4 vr20_16_4 vr21_16_4 vr22_16_4 vr23_16_4 vr24_16_4 vr25_16_4 vr26_16_4 vr27_16_4 vr28_16_4 vr29_16_4 vr30_16_4 vr31_16_4 ];
-attach variables vrS_16_5 [vr0_16_5 vr1_16_5 vr2_16_5 vr3_16_5 vr4_16_5 vr5_16_5 vr6_16_5 vr7_16_5 vr8_16_5 vr9_16_5 vr10_16_5 vr11_16_5 vr12_16_5 vr13_16_5 vr14_16_5 vr15_16_5 vr16_16_5 vr17_16_5 vr18_16_5 vr19_16_5 vr20_16_5 vr21_16_5 vr22_16_5 vr23_16_5 vr24_16_5 vr25_16_5 vr26_16_5 vr27_16_5 vr28_16_5 vr29_16_5 vr30_16_5 vr31_16_5 ];
-attach variables vrS_16_6 [vr0_16_6 vr1_16_6 vr2_16_6 vr3_16_6 vr4_16_6 vr5_16_6 vr6_16_6 vr7_16_6 vr8_16_6 vr9_16_6 vr10_16_6 vr11_16_6 vr12_16_6 vr13_16_6 vr14_16_6 vr15_16_6 vr16_16_6 vr17_16_6 vr18_16_6 vr19_16_6 vr20_16_6 vr21_16_6 vr22_16_6 vr23_16_6 vr24_16_6 vr25_16_6 vr26_16_6 vr27_16_6 vr28_16_6 vr29_16_6 vr30_16_6 vr31_16_6 ];
-attach variables vrS_16_7 [vr0_16_7 vr1_16_7 vr2_16_7 vr3_16_7 vr4_16_7 vr5_16_7 vr6_16_7 vr7_16_7 vr8_16_7 vr9_16_7 vr10_16_7 vr11_16_7 vr12_16_7 vr13_16_7 vr14_16_7 vr15_16_7 vr16_16_7 vr17_16_7 vr18_16_7 vr19_16_7 vr20_16_7 vr21_16_7 vr22_16_7 vr23_16_7 vr24_16_7 vr25_16_7 vr26_16_7 vr27_16_7 vr28_16_7 vr29_16_7 vr30_16_7 vr31_16_7 ];
-
-# AltVect Vector vrS sub-piece selectors for size 8
-attach variables vrS_8_0 [vr0_8_0 vr1_8_0 vr2_8_0 vr3_8_0 vr4_8_0 vr5_8_0 vr6_8_0 vr7_8_0 vr8_8_0 vr9_8_0 vr10_8_0 vr11_8_0 vr12_8_0 vr13_8_0 vr14_8_0 vr15_8_0 vr16_8_0 vr17_8_0 vr18_8_0 vr19_8_0 vr20_8_0 vr21_8_0 vr22_8_0 vr23_8_0 vr24_8_0 vr25_8_0 vr26_8_0 vr27_8_0 vr28_8_0 vr29_8_0 vr30_8_0 vr31_8_0 ];
-attach variables vrS_8_1 [vr0_8_1 vr1_8_1 vr2_8_1 vr3_8_1 vr4_8_1 vr5_8_1 vr6_8_1 vr7_8_1 vr8_8_1 vr9_8_1 vr10_8_1 vr11_8_1 vr12_8_1 vr13_8_1 vr14_8_1 vr15_8_1 vr16_8_1 vr17_8_1 vr18_8_1 vr19_8_1 vr20_8_1 vr21_8_1 vr22_8_1 vr23_8_1 vr24_8_1 vr25_8_1 vr26_8_1 vr27_8_1 vr28_8_1 vr29_8_1 vr30_8_1 vr31_8_1 ];
-attach variables vrS_8_2 [vr0_8_2 vr1_8_2 vr2_8_2 vr3_8_2 vr4_8_2 vr5_8_2 vr6_8_2 vr7_8_2 vr8_8_2 vr9_8_2 vr10_8_2 vr11_8_2 vr12_8_2 vr13_8_2 vr14_8_2 vr15_8_2 vr16_8_2 vr17_8_2 vr18_8_2 vr19_8_2 vr20_8_2 vr21_8_2 vr22_8_2 vr23_8_2 vr24_8_2 vr25_8_2 vr26_8_2 vr27_8_2 vr28_8_2 vr29_8_2 vr30_8_2 vr31_8_2 ];
-attach variables vrS_8_3 [vr0_8_3 vr1_8_3 vr2_8_3 vr3_8_3 vr4_8_3 vr5_8_3 vr6_8_3 vr7_8_3 vr8_8_3 vr9_8_3 vr10_8_3 vr11_8_3 vr12_8_3 vr13_8_3 vr14_8_3 vr15_8_3 vr16_8_3 vr17_8_3 vr18_8_3 vr19_8_3 vr20_8_3 vr21_8_3 vr22_8_3 vr23_8_3 vr24_8_3 vr25_8_3 vr26_8_3 vr27_8_3 vr28_8_3 vr29_8_3 vr30_8_3 vr31_8_3 ];
-attach variables vrS_8_4 [vr0_8_4 vr1_8_4 vr2_8_4 vr3_8_4 vr4_8_4 vr5_8_4 vr6_8_4 vr7_8_4 vr8_8_4 vr9_8_4 vr10_8_4 vr11_8_4 vr12_8_4 vr13_8_4 vr14_8_4 vr15_8_4 vr16_8_4 vr17_8_4 vr18_8_4 vr19_8_4 vr20_8_4 vr21_8_4 vr22_8_4 vr23_8_4 vr24_8_4 vr25_8_4 vr26_8_4 vr27_8_4 vr28_8_4 vr29_8_4 vr30_8_4 vr31_8_4 ];
-attach variables vrS_8_5 [vr0_8_5 vr1_8_5 vr2_8_5 vr3_8_5 vr4_8_5 vr5_8_5 vr6_8_5 vr7_8_5 vr8_8_5 vr9_8_5 vr10_8_5 vr11_8_5 vr12_8_5 vr13_8_5 vr14_8_5 vr15_8_5 vr16_8_5 vr17_8_5 vr18_8_5 vr19_8_5 vr20_8_5 vr21_8_5 vr22_8_5 vr23_8_5 vr24_8_5 vr25_8_5 vr26_8_5 vr27_8_5 vr28_8_5 vr29_8_5 vr30_8_5 vr31_8_5 ];
-attach variables vrS_8_6 [vr0_8_6 vr1_8_6 vr2_8_6 vr3_8_6 vr4_8_6 vr5_8_6 vr6_8_6 vr7_8_6 vr8_8_6 vr9_8_6 vr10_8_6 vr11_8_6 vr12_8_6 vr13_8_6 vr14_8_6 vr15_8_6 vr16_8_6 vr17_8_6 vr18_8_6 vr19_8_6 vr20_8_6 vr21_8_6 vr22_8_6 vr23_8_6 vr24_8_6 vr25_8_6 vr26_8_6 vr27_8_6 vr28_8_6 vr29_8_6 vr30_8_6 vr31_8_6 ];
-attach variables vrS_8_7 [vr0_8_7 vr1_8_7 vr2_8_7 vr3_8_7 vr4_8_7 vr5_8_7 vr6_8_7 vr7_8_7 vr8_8_7 vr9_8_7 vr10_8_7 vr11_8_7 vr12_8_7 vr13_8_7 vr14_8_7 vr15_8_7 vr16_8_7 vr17_8_7 vr18_8_7 vr19_8_7 vr20_8_7 vr21_8_7 vr22_8_7 vr23_8_7 vr24_8_7 vr25_8_7 vr26_8_7 vr27_8_7 vr28_8_7 vr29_8_7 vr30_8_7 vr31_8_7 ];
-attach variables vrS_8_8 [vr0_8_8 vr1_8_8 vr2_8_8 vr3_8_8 vr4_8_8 vr5_8_8 vr6_8_8 vr7_8_8 vr8_8_8 vr9_8_8 vr10_8_8 vr11_8_8 vr12_8_8 vr13_8_8 vr14_8_8 vr15_8_8 vr16_8_8 vr17_8_8 vr18_8_8 vr19_8_8 vr20_8_8 vr21_8_8 vr22_8_8 vr23_8_8 vr24_8_8 vr25_8_8 vr26_8_8 vr27_8_8 vr28_8_8 vr29_8_8 vr30_8_8 vr31_8_8 ];
-attach variables vrS_8_9 [vr0_8_9 vr1_8_9 vr2_8_9 vr3_8_9 vr4_8_9 vr5_8_9 vr6_8_9 vr7_8_9 vr8_8_9 vr9_8_9 vr10_8_9 vr11_8_9 vr12_8_9 vr13_8_9 vr14_8_9 vr15_8_9 vr16_8_9 vr17_8_9 vr18_8_9 vr19_8_9 vr20_8_9 vr21_8_9 vr22_8_9 vr23_8_9 vr24_8_9 vr25_8_9 vr26_8_9 vr27_8_9 vr28_8_9 vr29_8_9 vr30_8_9 vr31_8_9 ];
-attach variables vrS_8_10 [vr0_8_10 vr1_8_10 vr2_8_10 vr3_8_10 vr4_8_10 vr5_8_10 vr6_8_10 vr7_8_10 vr8_8_10 vr9_8_10 vr10_8_10 vr11_8_10 vr12_8_10 vr13_8_10 vr14_8_10 vr15_8_10 vr16_8_10 vr17_8_10 vr18_8_10 vr19_8_10 vr20_8_10 vr21_8_10 vr22_8_10 vr23_8_10 vr24_8_10 vr25_8_10 vr26_8_10 vr27_8_10 vr28_8_10 vr29_8_10 vr30_8_10 vr31_8_10 ];
-attach variables vrS_8_11 [vr0_8_11 vr1_8_11 vr2_8_11 vr3_8_11 vr4_8_11 vr5_8_11 vr6_8_11 vr7_8_11 vr8_8_11 vr9_8_11 vr10_8_11 vr11_8_11 vr12_8_11 vr13_8_11 vr14_8_11 vr15_8_11 vr16_8_11 vr17_8_11 vr18_8_11 vr19_8_11 vr20_8_11 vr21_8_11 vr22_8_11 vr23_8_11 vr24_8_11 vr25_8_11 vr26_8_11 vr27_8_11 vr28_8_11 vr29_8_11 vr30_8_11 vr31_8_11 ];
-attach variables vrS_8_12 [vr0_8_12 vr1_8_12 vr2_8_12 vr3_8_12 vr4_8_12 vr5_8_12 vr6_8_12 vr7_8_12 vr8_8_12 vr9_8_12 vr10_8_12 vr11_8_12 vr12_8_12 vr13_8_12 vr14_8_12 vr15_8_12 vr16_8_12 vr17_8_12 vr18_8_12 vr19_8_12 vr20_8_12 vr21_8_12 vr22_8_12 vr23_8_12 vr24_8_12 vr25_8_12 vr26_8_12 vr27_8_12 vr28_8_12 vr29_8_12 vr30_8_12 vr31_8_12 ];
-attach variables vrS_8_13 [vr0_8_13 vr1_8_13 vr2_8_13 vr3_8_13 vr4_8_13 vr5_8_13 vr6_8_13 vr7_8_13 vr8_8_13 vr9_8_13 vr10_8_13 vr11_8_13 vr12_8_13 vr13_8_13 vr14_8_13 vr15_8_13 vr16_8_13 vr17_8_13 vr18_8_13 vr19_8_13 vr20_8_13 vr21_8_13 vr22_8_13 vr23_8_13 vr24_8_13 vr25_8_13 vr26_8_13 vr27_8_13 vr28_8_13 vr29_8_13 vr30_8_13 vr31_8_13 ];
-attach variables vrS_8_14 [vr0_8_14 vr1_8_14 vr2_8_14 vr3_8_14 vr4_8_14 vr5_8_14 vr6_8_14 vr7_8_14 vr8_8_14 vr9_8_14 vr10_8_14 vr11_8_14 vr12_8_14 vr13_8_14 vr14_8_14 vr15_8_14 vr16_8_14 vr17_8_14 vr18_8_14 vr19_8_14 vr20_8_14 vr21_8_14 vr22_8_14 vr23_8_14 vr24_8_14 vr25_8_14 vr26_8_14 vr27_8_14 vr28_8_14 vr29_8_14 vr30_8_14 vr31_8_14 ];
-attach variables vrS_8_15 [vr0_8_15 vr1_8_15 vr2_8_15 vr3_8_15 vr4_8_15 vr5_8_15 vr6_8_15 vr7_8_15 vr8_8_15 vr9_8_15 vr10_8_15 vr11_8_15 vr12_8_15 vr13_8_15 vr14_8_15 vr15_8_15 vr16_8_15 vr17_8_15 vr18_8_15 vr19_8_15 vr20_8_15 vr21_8_15 vr22_8_15 vr23_8_15 vr24_8_15 vr25_8_15 vr26_8_15 vr27_8_15 vr28_8_15 vr29_8_15 vr30_8_15 vr31_8_15 ];
-
-
-# AltVect Vector vrC sub-piece selectors 
-
-# AltVect Vector vrC sub-piece selectors for size 64
-attach variables vrC_64_0 [vr0_64_0 vr1_64_0 vr2_64_0 vr3_64_0 vr4_64_0 vr5_64_0 vr6_64_0 vr7_64_0 vr8_64_0 vr9_64_0 vr10_64_0 vr11_64_0 vr12_64_0 vr13_64_0 vr14_64_0 vr15_64_0 vr16_64_0 vr17_64_0 vr18_64_0 vr19_64_0 vr20_64_0 vr21_64_0 vr22_64_0 vr23_64_0 vr24_64_0 vr25_64_0 vr26_64_0 vr27_64_0 vr28_64_0 vr29_64_0 vr30_64_0 vr31_64_0 ];
-attach variables vrC_64_1 [vr0_64_1 vr1_64_1 vr2_64_1 vr3_64_1 vr4_64_1 vr5_64_1 vr6_64_1 vr7_64_1 vr8_64_1 vr9_64_1 vr10_64_1 vr11_64_1 vr12_64_1 vr13_64_1 vr14_64_1 vr15_64_1 vr16_64_1 vr17_64_1 vr18_64_1 vr19_64_1 vr20_64_1 vr21_64_1 vr22_64_1 vr23_64_1 vr24_64_1 vr25_64_1 vr26_64_1 vr27_64_1 vr28_64_1 vr29_64_1 vr30_64_1 vr31_64_1 ];
-
-# AltVect Vector vrC sub-piece selectors for size 32
-attach variables vrC_32_0 [vr0_32_0 vr1_32_0 vr2_32_0 vr3_32_0 vr4_32_0 vr5_32_0 vr6_32_0 vr7_32_0 vr8_32_0 vr9_32_0 vr10_32_0 vr11_32_0 vr12_32_0 vr13_32_0 vr14_32_0 vr15_32_0 vr16_32_0 vr17_32_0 vr18_32_0 vr19_32_0 vr20_32_0 vr21_32_0 vr22_32_0 vr23_32_0 vr24_32_0 vr25_32_0 vr26_32_0 vr27_32_0 vr28_32_0 vr29_32_0 vr30_32_0 vr31_32_0 ];
-attach variables vrC_32_1 [vr0_32_1 vr1_32_1 vr2_32_1 vr3_32_1 vr4_32_1 vr5_32_1 vr6_32_1 vr7_32_1 vr8_32_1 vr9_32_1 vr10_32_1 vr11_32_1 vr12_32_1 vr13_32_1 vr14_32_1 vr15_32_1 vr16_32_1 vr17_32_1 vr18_32_1 vr19_32_1 vr20_32_1 vr21_32_1 vr22_32_1 vr23_32_1 vr24_32_1 vr25_32_1 vr26_32_1 vr27_32_1 vr28_32_1 vr29_32_1 vr30_32_1 vr31_32_1 ];
-attach variables vrC_32_2 [vr0_32_2 vr1_32_2 vr2_32_2 vr3_32_2 vr4_32_2 vr5_32_2 vr6_32_2 vr7_32_2 vr8_32_2 vr9_32_2 vr10_32_2 vr11_32_2 vr12_32_2 vr13_32_2 vr14_32_2 vr15_32_2 vr16_32_2 vr17_32_2 vr18_32_2 vr19_32_2 vr20_32_2 vr21_32_2 vr22_32_2 vr23_32_2 vr24_32_2 vr25_32_2 vr26_32_2 vr27_32_2 vr28_32_2 vr29_32_2 vr30_32_2 vr31_32_2 ];
-attach variables vrC_32_3 [vr0_32_3 vr1_32_3 vr2_32_3 vr3_32_3 vr4_32_3 vr5_32_3 vr6_32_3 vr7_32_3 vr8_32_3 vr9_32_3 vr10_32_3 vr11_32_3 vr12_32_3 vr13_32_3 vr14_32_3 vr15_32_3 vr16_32_3 vr17_32_3 vr18_32_3 vr19_32_3 vr20_32_3 vr21_32_3 vr22_32_3 vr23_32_3 vr24_32_3 vr25_32_3 vr26_32_3 vr27_32_3 vr28_32_3 vr29_32_3 vr30_32_3 vr31_32_3 ];
-
-# AltVect Vector vrC sub-piece selectors for size 16
-attach variables vrC_16_0 [vr0_16_0 vr1_16_0 vr2_16_0 vr3_16_0 vr4_16_0 vr5_16_0 vr6_16_0 vr7_16_0 vr8_16_0 vr9_16_0 vr10_16_0 vr11_16_0 vr12_16_0 vr13_16_0 vr14_16_0 vr15_16_0 vr16_16_0 vr17_16_0 vr18_16_0 vr19_16_0 vr20_16_0 vr21_16_0 vr22_16_0 vr23_16_0 vr24_16_0 vr25_16_0 vr26_16_0 vr27_16_0 vr28_16_0 vr29_16_0 vr30_16_0 vr31_16_0 ];
-attach variables vrC_16_1 [vr0_16_1 vr1_16_1 vr2_16_1 vr3_16_1 vr4_16_1 vr5_16_1 vr6_16_1 vr7_16_1 vr8_16_1 vr9_16_1 vr10_16_1 vr11_16_1 vr12_16_1 vr13_16_1 vr14_16_1 vr15_16_1 vr16_16_1 vr17_16_1 vr18_16_1 vr19_16_1 vr20_16_1 vr21_16_1 vr22_16_1 vr23_16_1 vr24_16_1 vr25_16_1 vr26_16_1 vr27_16_1 vr28_16_1 vr29_16_1 vr30_16_1 vr31_16_1 ];
-attach variables vrC_16_2 [vr0_16_2 vr1_16_2 vr2_16_2 vr3_16_2 vr4_16_2 vr5_16_2 vr6_16_2 vr7_16_2 vr8_16_2 vr9_16_2 vr10_16_2 vr11_16_2 vr12_16_2 vr13_16_2 vr14_16_2 vr15_16_2 vr16_16_2 vr17_16_2 vr18_16_2 vr19_16_2 vr20_16_2 vr21_16_2 vr22_16_2 vr23_16_2 vr24_16_2 vr25_16_2 vr26_16_2 vr27_16_2 vr28_16_2 vr29_16_2 vr30_16_2 vr31_16_2 ];
-attach variables vrC_16_3 [vr0_16_3 vr1_16_3 vr2_16_3 vr3_16_3 vr4_16_3 vr5_16_3 vr6_16_3 vr7_16_3 vr8_16_3 vr9_16_3 vr10_16_3 vr11_16_3 vr12_16_3 vr13_16_3 vr14_16_3 vr15_16_3 vr16_16_3 vr17_16_3 vr18_16_3 vr19_16_3 vr20_16_3 vr21_16_3 vr22_16_3 vr23_16_3 vr24_16_3 vr25_16_3 vr26_16_3 vr27_16_3 vr28_16_3 vr29_16_3 vr30_16_3 vr31_16_3 ];
-attach variables vrC_16_4 [vr0_16_4 vr1_16_4 vr2_16_4 vr3_16_4 vr4_16_4 vr5_16_4 vr6_16_4 vr7_16_4 vr8_16_4 vr9_16_4 vr10_16_4 vr11_16_4 vr12_16_4 vr13_16_4 vr14_16_4 vr15_16_4 vr16_16_4 vr17_16_4 vr18_16_4 vr19_16_4 vr20_16_4 vr21_16_4 vr22_16_4 vr23_16_4 vr24_16_4 vr25_16_4 vr26_16_4 vr27_16_4 vr28_16_4 vr29_16_4 vr30_16_4 vr31_16_4 ];
-attach variables vrC_16_5 [vr0_16_5 vr1_16_5 vr2_16_5 vr3_16_5 vr4_16_5 vr5_16_5 vr6_16_5 vr7_16_5 vr8_16_5 vr9_16_5 vr10_16_5 vr11_16_5 vr12_16_5 vr13_16_5 vr14_16_5 vr15_16_5 vr16_16_5 vr17_16_5 vr18_16_5 vr19_16_5 vr20_16_5 vr21_16_5 vr22_16_5 vr23_16_5 vr24_16_5 vr25_16_5 vr26_16_5 vr27_16_5 vr28_16_5 vr29_16_5 vr30_16_5 vr31_16_5 ];
-attach variables vrC_16_6 [vr0_16_6 vr1_16_6 vr2_16_6 vr3_16_6 vr4_16_6 vr5_16_6 vr6_16_6 vr7_16_6 vr8_16_6 vr9_16_6 vr10_16_6 vr11_16_6 vr12_16_6 vr13_16_6 vr14_16_6 vr15_16_6 vr16_16_6 vr17_16_6 vr18_16_6 vr19_16_6 vr20_16_6 vr21_16_6 vr22_16_6 vr23_16_6 vr24_16_6 vr25_16_6 vr26_16_6 vr27_16_6 vr28_16_6 vr29_16_6 vr30_16_6 vr31_16_6 ];
-attach variables vrC_16_7 [vr0_16_7 vr1_16_7 vr2_16_7 vr3_16_7 vr4_16_7 vr5_16_7 vr6_16_7 vr7_16_7 vr8_16_7 vr9_16_7 vr10_16_7 vr11_16_7 vr12_16_7 vr13_16_7 vr14_16_7 vr15_16_7 vr16_16_7 vr17_16_7 vr18_16_7 vr19_16_7 vr20_16_7 vr21_16_7 vr22_16_7 vr23_16_7 vr24_16_7 vr25_16_7 vr26_16_7 vr27_16_7 vr28_16_7 vr29_16_7 vr30_16_7 vr31_16_7 ];
-
-# AltVect Vector vrC sub-piece selectors for size 8
-attach variables vrC_8_0 [vr0_8_0 vr1_8_0 vr2_8_0 vr3_8_0 vr4_8_0 vr5_8_0 vr6_8_0 vr7_8_0 vr8_8_0 vr9_8_0 vr10_8_0 vr11_8_0 vr12_8_0 vr13_8_0 vr14_8_0 vr15_8_0 vr16_8_0 vr17_8_0 vr18_8_0 vr19_8_0 vr20_8_0 vr21_8_0 vr22_8_0 vr23_8_0 vr24_8_0 vr25_8_0 vr26_8_0 vr27_8_0 vr28_8_0 vr29_8_0 vr30_8_0 vr31_8_0 ];
-attach variables vrC_8_1 [vr0_8_1 vr1_8_1 vr2_8_1 vr3_8_1 vr4_8_1 vr5_8_1 vr6_8_1 vr7_8_1 vr8_8_1 vr9_8_1 vr10_8_1 vr11_8_1 vr12_8_1 vr13_8_1 vr14_8_1 vr15_8_1 vr16_8_1 vr17_8_1 vr18_8_1 vr19_8_1 vr20_8_1 vr21_8_1 vr22_8_1 vr23_8_1 vr24_8_1 vr25_8_1 vr26_8_1 vr27_8_1 vr28_8_1 vr29_8_1 vr30_8_1 vr31_8_1 ];
-attach variables vrC_8_2 [vr0_8_2 vr1_8_2 vr2_8_2 vr3_8_2 vr4_8_2 vr5_8_2 vr6_8_2 vr7_8_2 vr8_8_2 vr9_8_2 vr10_8_2 vr11_8_2 vr12_8_2 vr13_8_2 vr14_8_2 vr15_8_2 vr16_8_2 vr17_8_2 vr18_8_2 vr19_8_2 vr20_8_2 vr21_8_2 vr22_8_2 vr23_8_2 vr24_8_2 vr25_8_2 vr26_8_2 vr27_8_2 vr28_8_2 vr29_8_2 vr30_8_2 vr31_8_2 ];
-attach variables vrC_8_3 [vr0_8_3 vr1_8_3 vr2_8_3 vr3_8_3 vr4_8_3 vr5_8_3 vr6_8_3 vr7_8_3 vr8_8_3 vr9_8_3 vr10_8_3 vr11_8_3 vr12_8_3 vr13_8_3 vr14_8_3 vr15_8_3 vr16_8_3 vr17_8_3 vr18_8_3 vr19_8_3 vr20_8_3 vr21_8_3 vr22_8_3 vr23_8_3 vr24_8_3 vr25_8_3 vr26_8_3 vr27_8_3 vr28_8_3 vr29_8_3 vr30_8_3 vr31_8_3 ];
-attach variables vrC_8_4 [vr0_8_4 vr1_8_4 vr2_8_4 vr3_8_4 vr4_8_4 vr5_8_4 vr6_8_4 vr7_8_4 vr8_8_4 vr9_8_4 vr10_8_4 vr11_8_4 vr12_8_4 vr13_8_4 vr14_8_4 vr15_8_4 vr16_8_4 vr17_8_4 vr18_8_4 vr19_8_4 vr20_8_4 vr21_8_4 vr22_8_4 vr23_8_4 vr24_8_4 vr25_8_4 vr26_8_4 vr27_8_4 vr28_8_4 vr29_8_4 vr30_8_4 vr31_8_4 ];
-attach variables vrC_8_5 [vr0_8_5 vr1_8_5 vr2_8_5 vr3_8_5 vr4_8_5 vr5_8_5 vr6_8_5 vr7_8_5 vr8_8_5 vr9_8_5 vr10_8_5 vr11_8_5 vr12_8_5 vr13_8_5 vr14_8_5 vr15_8_5 vr16_8_5 vr17_8_5 vr18_8_5 vr19_8_5 vr20_8_5 vr21_8_5 vr22_8_5 vr23_8_5 vr24_8_5 vr25_8_5 vr26_8_5 vr27_8_5 vr28_8_5 vr29_8_5 vr30_8_5 vr31_8_5 ];
-attach variables vrC_8_6 [vr0_8_6 vr1_8_6 vr2_8_6 vr3_8_6 vr4_8_6 vr5_8_6 vr6_8_6 vr7_8_6 vr8_8_6 vr9_8_6 vr10_8_6 vr11_8_6 vr12_8_6 vr13_8_6 vr14_8_6 vr15_8_6 vr16_8_6 vr17_8_6 vr18_8_6 vr19_8_6 vr20_8_6 vr21_8_6 vr22_8_6 vr23_8_6 vr24_8_6 vr25_8_6 vr26_8_6 vr27_8_6 vr28_8_6 vr29_8_6 vr30_8_6 vr31_8_6 ];
-attach variables vrC_8_7 [vr0_8_7 vr1_8_7 vr2_8_7 vr3_8_7 vr4_8_7 vr5_8_7 vr6_8_7 vr7_8_7 vr8_8_7 vr9_8_7 vr10_8_7 vr11_8_7 vr12_8_7 vr13_8_7 vr14_8_7 vr15_8_7 vr16_8_7 vr17_8_7 vr18_8_7 vr19_8_7 vr20_8_7 vr21_8_7 vr22_8_7 vr23_8_7 vr24_8_7 vr25_8_7 vr26_8_7 vr27_8_7 vr28_8_7 vr29_8_7 vr30_8_7 vr31_8_7 ];
-attach variables vrC_8_8 [vr0_8_8 vr1_8_8 vr2_8_8 vr3_8_8 vr4_8_8 vr5_8_8 vr6_8_8 vr7_8_8 vr8_8_8 vr9_8_8 vr10_8_8 vr11_8_8 vr12_8_8 vr13_8_8 vr14_8_8 vr15_8_8 vr16_8_8 vr17_8_8 vr18_8_8 vr19_8_8 vr20_8_8 vr21_8_8 vr22_8_8 vr23_8_8 vr24_8_8 vr25_8_8 vr26_8_8 vr27_8_8 vr28_8_8 vr29_8_8 vr30_8_8 vr31_8_8 ];
-attach variables vrC_8_9 [vr0_8_9 vr1_8_9 vr2_8_9 vr3_8_9 vr4_8_9 vr5_8_9 vr6_8_9 vr7_8_9 vr8_8_9 vr9_8_9 vr10_8_9 vr11_8_9 vr12_8_9 vr13_8_9 vr14_8_9 vr15_8_9 vr16_8_9 vr17_8_9 vr18_8_9 vr19_8_9 vr20_8_9 vr21_8_9 vr22_8_9 vr23_8_9 vr24_8_9 vr25_8_9 vr26_8_9 vr27_8_9 vr28_8_9 vr29_8_9 vr30_8_9 vr31_8_9 ];
-attach variables vrC_8_10 [vr0_8_10 vr1_8_10 vr2_8_10 vr3_8_10 vr4_8_10 vr5_8_10 vr6_8_10 vr7_8_10 vr8_8_10 vr9_8_10 vr10_8_10 vr11_8_10 vr12_8_10 vr13_8_10 vr14_8_10 vr15_8_10 vr16_8_10 vr17_8_10 vr18_8_10 vr19_8_10 vr20_8_10 vr21_8_10 vr22_8_10 vr23_8_10 vr24_8_10 vr25_8_10 vr26_8_10 vr27_8_10 vr28_8_10 vr29_8_10 vr30_8_10 vr31_8_10 ];
-attach variables vrC_8_11 [vr0_8_11 vr1_8_11 vr2_8_11 vr3_8_11 vr4_8_11 vr5_8_11 vr6_8_11 vr7_8_11 vr8_8_11 vr9_8_11 vr10_8_11 vr11_8_11 vr12_8_11 vr13_8_11 vr14_8_11 vr15_8_11 vr16_8_11 vr17_8_11 vr18_8_11 vr19_8_11 vr20_8_11 vr21_8_11 vr22_8_11 vr23_8_11 vr24_8_11 vr25_8_11 vr26_8_11 vr27_8_11 vr28_8_11 vr29_8_11 vr30_8_11 vr31_8_11 ];
-attach variables vrC_8_12 [vr0_8_12 vr1_8_12 vr2_8_12 vr3_8_12 vr4_8_12 vr5_8_12 vr6_8_12 vr7_8_12 vr8_8_12 vr9_8_12 vr10_8_12 vr11_8_12 vr12_8_12 vr13_8_12 vr14_8_12 vr15_8_12 vr16_8_12 vr17_8_12 vr18_8_12 vr19_8_12 vr20_8_12 vr21_8_12 vr22_8_12 vr23_8_12 vr24_8_12 vr25_8_12 vr26_8_12 vr27_8_12 vr28_8_12 vr29_8_12 vr30_8_12 vr31_8_12 ];
-attach variables vrC_8_13 [vr0_8_13 vr1_8_13 vr2_8_13 vr3_8_13 vr4_8_13 vr5_8_13 vr6_8_13 vr7_8_13 vr8_8_13 vr9_8_13 vr10_8_13 vr11_8_13 vr12_8_13 vr13_8_13 vr14_8_13 vr15_8_13 vr16_8_13 vr17_8_13 vr18_8_13 vr19_8_13 vr20_8_13 vr21_8_13 vr22_8_13 vr23_8_13 vr24_8_13 vr25_8_13 vr26_8_13 vr27_8_13 vr28_8_13 vr29_8_13 vr30_8_13 vr31_8_13 ];
-attach variables vrC_8_14 [vr0_8_14 vr1_8_14 vr2_8_14 vr3_8_14 vr4_8_14 vr5_8_14 vr6_8_14 vr7_8_14 vr8_8_14 vr9_8_14 vr10_8_14 vr11_8_14 vr12_8_14 vr13_8_14 vr14_8_14 vr15_8_14 vr16_8_14 vr17_8_14 vr18_8_14 vr19_8_14 vr20_8_14 vr21_8_14 vr22_8_14 vr23_8_14 vr24_8_14 vr25_8_14 vr26_8_14 vr27_8_14 vr28_8_14 vr29_8_14 vr30_8_14 vr31_8_14 ];
-attach variables vrC_8_15 [vr0_8_15 vr1_8_15 vr2_8_15 vr3_8_15 vr4_8_15 vr5_8_15 vr6_8_15 vr7_8_15 vr8_8_15 vr9_8_15 vr10_8_15 vr11_8_15 vr12_8_15 vr13_8_15 vr14_8_15 vr15_8_15 vr16_8_15 vr17_8_15 vr18_8_15 vr19_8_15 vr20_8_15 vr21_8_15 vr22_8_15 vr23_8_15 vr24_8_15 vr25_8_15 vr26_8_15 vr27_8_15 vr28_8_15 vr29_8_15 vr30_8_15 vr31_8_15 ];
-
 ################################################################
 # Pseudo Instructions
 ################################################################
@@ -1420,6 +701,7 @@ define pcodeop dataCacheBlockStore;
 define pcodeop dataCacheBlockTouch;
 define pcodeop dataCacheBlockTouchForStore;
 define pcodeop dataCacheBlockClearToZero;
+define pcodeop dataCacheBlockSetToZeroLocked;
 define pcodeop dataCacheCongruenceClassInvalidate;
 define pcodeop dataCacheRead;
 define pcodeop externalControlIn;
@@ -1543,10 +825,10 @@ define pcodeop TLBWrite;
 define pcodeop WriteExternalEnable;
 define pcodeop WriteExternalEnableImmediate;
 
-# This is really used in the altivec version, but since it's a registered pcode op
-# and due to the way things get @included, this needs to be here
-define pcodeop vectorPermute;
-
+# Paired singles specific operations (they are too complex
+# to implement them as is)
+define pcodeop dequantize;
+define pcodeop quantize;
 
 ################################################################
 # Macros
@@ -1681,20 +963,12 @@ macro setFPSubFlags(op1, op2, result) {
 }
 
 macro loadRegister(reg, ea) {
-@ifdef BIT_64
-	reg = zext(*:4(ea));
-@else
 	reg = *:4(ea);
-@endif
 	ea = ea+4;
 }
 
 macro loadReg(reg) {
-@ifdef BIT_64
-	reg = zext(*:4(tea));
-@else
 	reg = *:4(tea);
-@endif
 	tea = tea+4;
 }
 
@@ -1702,39 +976,23 @@ macro loadRegisterPartial(reg, ea, sa) {
         mask:$(REGISTER_SIZE) = 0xffffffff;
         sa = ((4-sa) & 3) * 8;
         mask = mask << sa;
-@ifdef BIT_64
-  	reg = zext(*:4(ea));
-@else
         reg = *:4(ea);
-@endif
         reg = reg & mask;
         ea = ea + 4;
 }
 
 macro storeRegister(reg, ea) {
-@ifdef BIT_64
-	*:4(ea) = reg:4;
-@else
 	*:4(ea) = reg;
-@endif
 	ea = ea+4;
 }	
 
 macro storeReg(reg) {
-@ifdef BIT_64
-	*:4(tea) = reg:4;
-@else
 	*:4(tea) = reg;
-@endif
 	tea = tea+4;
 }	
 
 macro storeRegisterPartial(reg, ea, sa) {
-@ifdef BIT_64
-  *:4(ea) = reg:4;
-@else
   *:4(ea) = reg;
-@endif
   ea = ea + 4;
 }
 
@@ -1822,9 +1080,6 @@ CTR_DEC: "nz"	is BO_3=0  	{CTR = CTR-1; tmp:1 = (CTR != 0); export tmp; }
 CC_TF: "t"		is BO_1=1	{}
 CC_TF: "f"		is BO_1=0	{}
 
-# OP=19 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=129 & BIT_0=0
-
-
 # X 00---------------------------------------------------10 11-----------13 14------15 16----------------------------------------------------------------------------31 
 # X ---------------------------?---------------------------|----BI_CR=0----|--BI_CC---|---------------------------------------?----------------------------------------|
 CC_OP: "lt"					is BI_CC=0 & BI_CR=0 & BI_CC { tmp:1 = 0; getCrBit(cr0, BI_CC, tmp); export tmp; }
@@ -1890,41 +1145,19 @@ RS_OR_ZERO: 0   is S=0		{ export 0:$(REGISTER_SIZE); }
 rotmask: mask   is MBL & ME [ mask = ((((ME-MBL)>>8) $and 1)*0xffffffff) $xor (0x7fffffff>>ME) $xor (0xffffffff>>MBL); ]   { export *[const]:4 mask; }
 
 DSIZE: "w"		is L    {}      # L is a don't care bit in 32-bit languages although it should always be 0
-@ifdef BIT_64					# L can only be 1 when in 64 bit language
-DSIZE: "d"		is L=1 {}
-@endif
 
-@ifdef BIT_64
-REG_A: 			is L=0 & A {tmp:8 = sext(A:4); export tmp; }
-REG_A:			is L=1 & A {export A; }
-REG_B: 			is L=0 & B {tmp:8 = sext(B:4); export tmp; }
-REG_B:			is L=1 & B {export B; }
-@else  # L is a don't care bit in 32-bit languages although it should always be 0
 REG_A:			is A { export A; }
 REG_B:			is B { export B; }
-@endif
 
-@ifdef BIT_64
-UREG_A: 			is L=0 & A {tmp:8 = zext(A:4); export tmp; }
-UREG_A:			is L=1 & A {export A; }
-UREG_B: 			is L=0 & B {tmp:8 = zext(B:4); export tmp; }
-UREG_B:			is L=1 & B {export B; }
-@else  # L is a don't care bit in 32-bit languages although it should always be 0
 UREG_A:			is A { export A; }
 UREG_B:			is B { export B; }
-@endif
 
 dPlusRaOrZeroAddress: SIMM(RA_OR_ZERO)	is SIMM & RA_OR_ZERO	{ tmp:$(REGISTER_SIZE) = RA_OR_ZERO+SIMM; export tmp; }
 dPlusRaOrZeroAddressPS: SIMM_PS(RA_OR_ZERO) is SIMM_PS & RA_OR_ZERO	{ tmp:4 = RA_OR_ZERO+SIMM_PS; export tmp; }
 dPlusRaAddress: SIMM(A)					is SIMM & A				{tmp:$(REGISTER_SIZE) = A+SIMM; export tmp;  }
+dPlusRaAddressPS: SIMM_PS(A) is SIMM_PS & A	{tmp:4 = A+SIMM_PS; export tmp;  }
 
 dUI16PlusRAOrZeroAddress: val^"("^RA_OR_ZERO^")" is  RA_OR_ZERO & UI_16_s8 [ val = UI_16_s8 << 3; ]  { ea:$(REGISTER_SIZE) = RA_OR_ZERO + val; export ea; }
-
-@ifdef BIT_64
-dsPlusRaAddress: simm_ds(A)	is SIMM_DS & A [simm_ds = SIMM_DS << 2;] {tmp:8 = simm_ds + A;export tmp;} 
-dsPlusRaOrZeroAddress: simm_ds(RA_OR_ZERO)	is SIMM_DS & RA_OR_ZERO [simm_ds = SIMM_DS << 2;] {tmp:8 = simm_ds + RA_OR_ZERO;export tmp;} 
-@endif
-
 
 FPSCR_CRFS:		is CRFS=0	{tmp:1 = fp_fx<<3 | fp_fex<<2 | fp_vx<<1 | fp_ox; fp_fx=0; fp_ox=0; export tmp;}
 FPSCR_CRFS:		is CRFS=1	{tmp:1 = fp_ux<<3 | fp_zx<<2 | fp_xx<<1 | fp_vxsnan; fp_ux=0; fp_zx=0; fp_xx=0; fp_ux=0;export tmp;}
@@ -1944,327 +1177,768 @@ CRM_CR:	cr2		is CRM=32 & cr2	{tmp:4 = zext(cr2) << 20;export tmp;}
 CRM_CR:	cr1		is CRM=64 & cr1	{tmp:4 = zext(cr1) << 24;export tmp;}
 CRM_CR:	cr0		is CRM=128 & cr0	{tmp:4 = zext(cr0) << 28;export tmp;}
 
-@ifdef BIT_64
-MB: mbValue  is MBH & MBL 	[ mbValue=(MBH<<5)|MBL; ]	{ export *[const]:4 mbValue; }
-SH: shValue  is SHH & SHL 	[ shValue=(SHH<<5)|SHL; ]	{ export *[const]:4 shValue; }
-
-@endif
-
 ################################################################
 # Instructions
 ################################################################
 
-
 @include "ppc_instructions.sinc"
 @include "ppc_embedded.sinc"
 
+################################################################
+# Paired singles quantized load and store instructions
+################################################################
 
-:psq_l fD,dPlusRaOrZeroAddressPS,W,I is OP=56 & fD & A & W & I & dPlusRaOrZeroAddressPS
+:psq_l fD,dPlusRaOrZeroAddressPS,W,I is OP=56 & fD & A & W & I & dPlusRaOrZeroAddressPS & ps0D & ps1D
 {
-
+	EA:4 = dPlusRaOrZeroAddressPS;
+	wFlag:1 = W;
+	type:1 = 0;
+	scale:1 = 0;
+	type[0,3] = I[16,3];
+	scale[0,3] = I[24,6];
+	if (type == 4 || type == 6) goto <int8>;
+	if (type == 5 || type == 7) goto <int16>;
+	goto <none>;
+	<int8>
+	ps0D = dequantize(EA, type, scale);
+	if (wFlag == 1) goto <wIsOne>;
+	ps1D = dequantize(EA + 1, type, scale);
+	goto inst_next;
+	<int16>
+	ps0D = dequantize(EA, type, scale);
+	if (wFlag == 1) goto <wIsOne>;
+	ps1D = dequantize(EA + 2, type, scale);
+	goto inst_next;
+	<none>
+	ps0D = *:4(EA);
+	ps1D = *:4(EA + 4);
+	if (wFlag == 0) goto inst_next;
+	<wIsOne>
+	one:1 = 1;
+	floatOne:4 = int2float(one);
+	ps1D = floatOne;
 }
 
-:psq_lu fD,dPlusRaOrZeroAddressPS,W,I is OP=57 & fD & A & W & I & dPlusRaOrZeroAddressPS
+:psq_lu fD,dPlusRaAddressPS,W,I is OP=57 & fD & A & W & I & dPlusRaAddressPS & ps0D & ps1D
 {
-
+	EA:4 = dPlusRaAddressPS;
+	A = EA;
+	wFlag:1 = W;
+	type:1 = 0;
+	scale:1 = 0;
+	type[0,3] = I[16,3];
+	scale[0,3] = I[24,6];
+	if (type == 4 || type == 6) goto <int8>;
+	if (type == 5 || type == 7) goto <int16>;
+	goto <none>;
+	<int8>
+	ps0D = dequantize(EA, type, scale);
+	if (wFlag == 1) goto <wIsOne>;
+	ps1D = dequantize(EA + 1, type, scale);
+	goto inst_next;
+	<int16>
+	ps0D = dequantize(EA, type, scale);
+	if (wFlag == 1) goto <wIsOne>;
+	ps1D = dequantize(EA + 2, type, scale);
+	goto inst_next;
+	<none>
+	ps0D = *:4(EA);
+	ps1D = *:4(EA + 4);
+	if (wFlag == 0) goto inst_next;
+	<wIsOne>
+	one:1 = 1;
+	floatOne:4 = int2float(one);
+	ps1D = floatOne;
 }
 
-:psq_lux fD,A,B,WX,IX is OP=4 & fD & A & B & WX & IX & XOP_1_6=38 & BIT_0=0 
+:psq_lux fD,RA_OR_ZERO,B,WX,IX is OP=4 & fD & RA_OR_ZERO & A & B & WX & IX & XOP_1_6=38 & BIT_0=0 & ps0D & ps1D
 {
-
+	EA:4 = RA_OR_ZERO + B;
+	A = EA;
+	wFlag:1 = WX;
+	type:1 = 0;
+	scale:1 = 0;
+	type[0,3] = IX[16,3];
+	scale[0,3] = IX[24,6];
+	if (type == 4 || type == 6) goto <int8>;
+	if (type == 5 || type == 7) goto <int16>;
+	goto <none>;
+	<int8>
+	ps0D = dequantize(EA, type, scale);
+	if (wFlag == 1) goto <wIsOne>;
+	ps1D = dequantize(EA + 1, type, scale);
+	goto inst_next;
+	<int16>
+	ps0D = dequantize(EA, type, scale);
+	if (wFlag == 1) goto <wIsOne>;
+	ps1D = dequantize(EA + 2, type, scale);
+	goto inst_next;
+	<none>
+	ps0D = *:4(EA);
+	ps1D = *:4(EA + 4);
+	if (wFlag == 0) goto inst_next;
+	<wIsOne>
+	one:1 = 1;
+	floatOne:4 = int2float(one);
+	ps1D = floatOne;
 }
 
-:psq_lx fD,A,B,WX,IX is OP=4 & fD & A & B & WX & IX & XOP_1_6=6 & BIT_0=0 
+:psq_lx fD,RA_OR_ZERO,B,WX,IX is OP=4 & fD & RA_OR_ZERO & B & WX & IX & XOP_1_6=6 & BIT_0=0 & ps0D & ps1D
 {
-
+	EA:4 = RA_OR_ZERO + B;
+	wFlag:1 = WX;
+	type:1 = 0;
+	scale:1 = 0;
+	type[0,3] = IX[16,3];
+	scale[0,3] = IX[24,6];
+	if (type == 4 || type == 6) goto <int8>;
+	if (type == 5 || type == 7) goto <int16>;
+	goto <none>;
+	<int8>
+	ps0D = dequantize(EA, type, scale);
+	if (wFlag == 1) goto <wIsOne>;
+	ps1D = dequantize(EA + 1, type, scale);
+	goto inst_next;
+	<int16>
+	ps0D = dequantize(EA, type, scale);
+	if (wFlag == 1) goto <wIsOne>;
+	ps1D = dequantize(EA + 2, type, scale);
+	goto inst_next;
+	<none>
+	ps0D = *:4(EA);
+	ps1D = *:4(EA + 4);
+	if (wFlag == 0) goto inst_next;
+	<wIsOne>
+	one:1 = 1;
+	floatOne:4 = int2float(one);
+	ps1D = floatOne;
 }
 
-:psq_st fS,dPlusRaOrZeroAddressPS,W,I is OP=60 & fS & A & W & I & dPlusRaOrZeroAddressPS
+:psq_st fS,dPlusRaOrZeroAddressPS,W,I is OP=60 & fS & A & W & I & dPlusRaOrZeroAddressPS & ps0S & ps1S
 {
-
+	EA:4 = dPlusRaOrZeroAddressPS;
+	wFlag:1 = W;
+	type:1 = 0;
+	scale:1 = 0;
+	type[0,3] = I[0,3];
+	scale[0,3] = I[8,6];
+	if (type == 4 || type == 6) goto <int8>;
+	if (type == 5 || type == 7) goto <int16>;
+	goto <none>;
+	<int8>
+	*:1(EA) = quantize(ps0S, type, scale);
+	if (wFlag == 1) goto inst_next;
+	*:1(EA + 1) = quantize(ps1S, type, scale);
+	goto inst_next;
+	<int16>
+	*:2(EA) = quantize(ps0S, type, scale);
+	if (wFlag == 1) goto inst_next;
+	*:2(EA + 2) = quantize(ps1S, type, scale);
+	goto inst_next;
+	<none>
+	*:4(EA) = ps0S;
+	if (wFlag == 1) goto inst_next;
+	*:4(EA + 4) = ps1S;
 }
 
-:psq_stu fS,dPlusRaOrZeroAddressPS,W,I is OP=61 & fS & A & W & I & dPlusRaOrZeroAddressPS
+:psq_stu fS,dPlusRaAddressPS,W,I is OP=61 & fS & A & W & I & dPlusRaAddressPS & ps0S & ps1S
 {
-
+	EA:4 = dPlusRaAddressPS;
+	A = EA;
+	wFlag:1 = W;
+	type:1 = 0;
+	scale:1 = 0;
+	type[0,3] = I[0,3];
+	scale[0,3] = I[8,6];
+	if (type == 4 || type == 6) goto <int8>;
+	if (type == 5 || type == 7) goto <int16>;
+	goto <none>;
+	<int8>
+	*:1(EA) = quantize(ps0S, type, scale);
+	if (wFlag == 1) goto inst_next;
+	*:1(EA + 1) = quantize(ps1S, type, scale);
+	goto inst_next;
+	<int16>
+	*:2(EA) = quantize(ps0S, type, scale);
+	if (wFlag == 1) goto inst_next;
+	*:2(EA + 2) = quantize(ps1S, type, scale);
+	goto inst_next;
+	<none>
+	*:4(EA) = ps0S;
+	if (wFlag == 1) goto inst_next;
+	*:4(EA + 4) = ps1S;
 }
 
-:psq_stux fS,A,B,WX,IX is OP=4 & fS & A & B & WX & IX & XOP_1_6=39 & BIT_0=0
+:psq_stux fS,RA_OR_ZERO,B,WX,IX is OP=4 & fS & RA_OR_ZERO & A & B & WX & IX & XOP_1_6=39 & BIT_0=0 & ps0S & ps1S
 {
-
+	EA:4 = RA_OR_ZERO + B;
+	A = EA;
+	wFlag:1 = WX;
+	type:1 = 0;
+	scale:1 = 0;
+	type[0,3] = IX[0,3];
+	scale[0,3] = IX[8,6];
+	if (type == 4 || type == 6) goto <int8>;
+	if (type == 5 || type == 7) goto <int16>;
+	goto <none>;
+	<int8>
+	*:1(EA) = quantize(ps0S, type, scale);
+	if (wFlag == 1) goto inst_next;
+	*:1(EA + 1) = quantize(ps1S, type, scale);
+	goto inst_next;
+	<int16>
+	*:2(EA) = quantize(ps0S, type, scale);
+	if (wFlag == 1) goto inst_next;
+	*:2(EA + 2) = quantize(ps1S, type, scale);
+	goto inst_next;
+	<none>
+	*:4(EA) = ps0S;
+	if (wFlag == 1) goto inst_next;
+	*:4(EA + 4) = ps1S;
 }
 
-:psq_stx fS,A,B,WX,IX is OP=4 & fS & A & B & WX & IX & XOP_1_6=7 & BIT_0=0
+:psq_stx fS,RA_OR_ZERO,B,WX,IX is OP=4 & fS & RA_OR_ZERO & B & WX & IX & XOP_1_6=7 & BIT_0=0 & ps0S & ps1S
 {
-
+	EA:4 = RA_OR_ZERO + B;
+	wFlag:1 = WX;
+	type:1 = 0;
+	scale:1 = 0;
+	type[0,3] = IX[0,3];
+	scale[0,3] = IX[8,6];
+	if (type == 4 || type == 6) goto <int8>;
+	if (type == 5 || type == 7) goto <int16>;
+	goto <none>;
+	<int8>
+	*:1(EA) = quantize(ps0S, type, scale);
+	if (wFlag == 1) goto inst_next;
+	*:1(EA + 1) = quantize(ps1S, type, scale);
+	goto inst_next;
+	<int16>
+	*:2(EA) = quantize(ps0S, type, scale);
+	if (wFlag == 1) goto inst_next;
+	*:2(EA + 2) = quantize(ps1S, type, scale);
+	goto inst_next;
+	<none>
+	*:4(EA) = ps0S;
+	if (wFlag == 1) goto inst_next;
+	*:4(EA + 4) = ps1S;
 }
 
-:ps_abs fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=264 & Rc=0
-{
+################################################################
+# Paired singles instructions
+################################################################
 
+:ps_abs fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=264 & Rc=0 & ps0D & ps1D & ps0B & ps1B
+{
+	ps0D = abs(ps0B);
+	ps1D = abs(ps1B);
 }
 
-:ps_abs. fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=264 & Rc=1
+:ps_abs. fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=264 & Rc=1 & ps0D & ps1D & ps0B & ps1B
 {
-
+	ps0D = abs(ps0B);
+	ps1D = abs(ps1B);
+	cr1flags();
 }
 
-:ps_add fD,fA,fB is OP=4 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=21 & Rc=0
+:ps_add fD,fA,fB is OP=4 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=21 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps0A f+ ps0B;
+	setFPAddFlags(ps0A, ps0B, ps0D);
+	ps1D = ps1A f+ ps1B;
 }
 
-:ps_add. fD,fA,fB is OP=4 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=21 & Rc=1
+:ps_add. fD,fA,fB is OP=4 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=21 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps0A f+ ps0B;
+	setFPAddFlags(ps0A, ps0B, ps0D);
+	ps1D = ps1A f+ ps1B;
+	cr1flags();
 }
 
-:ps_cmpo0 crfD,fA,fB is OP=4 & crfD & BITS_21_22=0 & fA & fB & XOP_1_10=32 & BIT_0=0
+:ps_cmpo0 CRFD,fA,fB is OP=4 & CRFD & BITS_21_22=0 & fA & fB & XOP_1_10=32 & BIT_0=0 & ps0B & ps1B & ps0A & ps1A
 {
-
+	tmp:1 = nan(ps0A) | nan(ps0B);
+	fp_cc0 = (ps0A f< ps0B);
+	fp_cc1 = (ps0A f> ps0B);
+	fp_cc2 = (ps0A f== ps0B);
+	CRFD = (fp_cc0 << 3) | (fp_cc1 << 2) | (fp_cc2 << 1) | tmp;	
 }
 
-:ps_cmpo1 crfD,fA,fB is OP=4 & crfD & BITS_21_22=0 & fA & fB & XOP_1_10=96 & BIT_0=0
+:ps_cmpo1 CRFD,fA,fB is OP=4 & CRFD & BITS_21_22=0 & fA & fB & XOP_1_10=96 & BIT_0=0 & ps0B & ps1B & ps0A & ps1A
 {
-
+	tmp:1 = nan(ps1A) | nan(ps1B);
+	fp_cc0 = (ps1A f< ps1B);
+	fp_cc1 = (ps1A f> ps1B);
+	fp_cc2 = (ps1A f== ps1B);
+	CRFD = (fp_cc0 << 3) | (fp_cc1 << 2) | (fp_cc2 << 1) | tmp;	
 }
 
-:ps_cmpu0 crfD,fA,fB is OP=4 & crfD & BITS_21_22=0 & fA & fB & XOP_1_10=0 & BIT_0=0
+:ps_cmpu0 CRFD,fA,fB is OP=4 & CRFD & BITS_21_22=0 & fA & fB & XOP_1_10=0 & BIT_0=0 & ps0B & ps1B & ps0A & ps1A
 {
-
+	tmp:1 = nan(ps0A) | nan(ps0B);
+	fp_cc0 = (ps0A f< ps0B);
+	fp_cc1 = (ps0A f> ps0B);
+	fp_cc2 = (ps0A f== ps0B);
+	CRFD = (fp_cc0 << 3) | (fp_cc1 << 2) | (fp_cc2 << 1) | tmp;	
 }
 
-:ps_cmpu1 crfD,fA,fB is OP=4 & crfD & BITS_21_22=0 & fA & fB & XOP_1_10=64 & BIT_0=0
+:ps_cmpu1 CRFD,fA,fB is OP=4 & CRFD & BITS_21_22=0 & fA & fB & XOP_1_10=64 & BIT_0=0 & ps0B & ps1B & ps0A & ps1A
 {
-
+	tmp:1 = nan(ps1A) | nan(ps1B);
+	fp_cc0 = (ps1A f< ps1B);
+	fp_cc1 = (ps1A f> ps1B);
+	fp_cc2 = (ps1A f== ps1B);
+	CRFD = (fp_cc0 << 3) | (fp_cc1 << 2) | (fp_cc2 << 1) | tmp;	
 }
 
-:ps_div fD,fA,fB is OP=4 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=18 & Rc=0
+:ps_div fD,fA,fB is OP=4 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=18 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps0A f/ ps0B;
+	setFPDivFlags(ps0A, ps0B, ps0D);
+	ps1D = ps1A f/ ps1B;
 }
 
-:ps_div. fD,fA,fB is OP=4 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=18 & Rc=1
+:ps_div. fD,fA,fB is OP=4 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=18 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps0A f/ ps0B;
+	setFPDivFlags(ps0A, ps0B, ps0D);
+	ps1D = ps1A f/ ps1B;
+	cr1flags();
 }
 
-:ps_madd fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=29 & Rc=0
+:ps_madd fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=29 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	tmp1:4 = ps0A f* ps0C;
+	ps0D = tmp1 f+ ps0B;
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(ps0A) | nan(ps0C) | nan(ps0B);
+	setSummaryFPSCR();
+	tmp2:4 = ps1A f* ps1C;
+	ps1D = tmp2 f+ ps1B;
 }
 
-:ps_madd. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=29 & Rc=1
+:ps_madd. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=29 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	tmp1:4 = ps0A f* ps0C;
+	ps0D = tmp1 f+ ps0B;
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(ps0A) | nan(ps0C) | nan(ps0B);
+	setSummaryFPSCR();
+	tmp2:4 = ps1A f* ps1C;
+	ps1D = tmp2 f+ ps1B;
+	cr1flags();
 }
 
-:ps_madds0 fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=14 & Rc=0
+:ps_madds0 fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=14 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	tmp1:4 = ps0A f* ps0C;
+	ps0D = tmp1 f+ ps0B;
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(ps0A) | nan(ps0C) | nan(ps0B);
+	setSummaryFPSCR();
+	tmp2:4 = ps1A f* ps0C;
+	ps1D = tmp2 f+ ps1B;
 }
 
-:ps_madds0. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=14 & Rc=1
+:ps_madds0. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=14 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	tmp1:4 = ps0A f* ps0C;
+	ps0D = tmp1 f+ ps0B;
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(ps0A) | nan(ps0C) | nan(ps0B);
+	setSummaryFPSCR();
+	tmp2:4 = ps1A f* ps0C;
+	ps1D = tmp2 f+ ps1B;
+	cr1flags();
 }
 
-:ps_madds1 fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=15 & Rc=0
+:ps_madds1 fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=15 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	tmp1:4 = ps0A f* ps1C;
+	ps0D = tmp1 f+ ps0B;
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(ps0A) | nan(ps1C) | nan(ps0B);
+	setSummaryFPSCR();
+	tmp2:4 = ps1A f* ps1C;
+	ps1D = tmp2 f+ ps1B;
 }
 
-:ps_madds1. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=15 & Rc=1
+:ps_madds1. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=15 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	tmp1:4 = ps0A f* ps1C;
+	ps0D = tmp1 f+ ps0B;
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(ps0A) | nan(ps1C) | nan(ps0B);
+	setSummaryFPSCR();
+	tmp2:4 = ps1A f* ps1C;
+	ps1D = tmp2 f+ ps1B;
+	cr1flags();
 }
 
-:ps_merge00 fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=528 & Rc=0
+:ps_merge00 fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=528 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps0A;
+	ps1D = ps0B;
 }
 
-:ps_merge00. fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=528 & Rc=1
+:ps_merge00. fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=528 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps0A;
+	ps1D = ps0B;
+	cr1flags();
 }
 
-:ps_merge01 fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=560 & Rc=0
+:ps_merge01 fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=560 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps0A;
+	ps1D = ps1B;
 }
 
-:ps_merge01. fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=560 & Rc=1
+:ps_merge01. fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=560 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps0A;
+	ps1D = ps1B;
+	cr1flags();
 }
 
-:ps_merge10 fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=592 & Rc=0
+:ps_merge10 fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=592 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps1A;
+	ps1D = ps0B;
 }
 
-:ps_merge10. fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=592 & Rc=1
+:ps_merge10. fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=592 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps1A;
+	ps1D = ps0B;
+	cr1flags();
 }
 
-:ps_merge11 fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=624 & Rc=0
+:ps_merge11 fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=624 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps1A;
+	ps1D = ps1B;
 }
 
-:ps_merge11. fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=624 & Rc=1
+:ps_merge11. fD,fA,fB is OP=4 & fD & fA & fB & XOP_1_10=624 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps1A;
+	ps1D = ps1B;
+	cr1flags();
 }
 
-:ps_mr fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=72 & Rc=0
+:ps_mr fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=72 & Rc=0 & ps0D & ps1D & ps0B & ps1B
 {
-
+	ps0D = ps0B;
+	ps1D = ps1B;
 }
 
-:ps_mr. fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=72 & Rc=1
+:ps_mr. fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=72 & Rc=1 & ps0D & ps1D & ps0B & ps1B
 {
-
+	ps0D = ps0B;
+	ps1D = ps1B;
+	cr1flags();
 }
 
-:ps_msub fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=28 & Rc=0
+:ps_msub fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=28 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	tmp1:4 = ps0A f* ps0C;
+	ps0D = tmp1 f- ps0B;
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+	setSummaryFPSCR();
+	tmp2:4 = ps1A f* ps1C;
+	ps1D = tmp2 f- ps1B;
 }
 
-:ps_msub. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=28 & Rc=1
+:ps_msub. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=28 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	tmp1:4 = ps0A f* ps0C;
+	ps0D = tmp1 f- ps0B;
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+	setSummaryFPSCR();
+	tmp2:4 = ps1A f* ps1C;
+	ps1D = tmp2 f- ps1B;
+	cr1flags();
 }
 
-:ps_mul fD,fA,fC is OP=4 & fD & fA & BITS_11_15=0 & fC & XOP_1_5=25 & Rc=0
+:ps_mul fD,fA,fC is OP=4 & fD & fA & BITS_11_15=0 & fC & XOP_1_5=25 & Rc=0 & ps0D & ps1D & ps0A & ps1A & ps0C & ps1C
 {
-
+	ps0D = ps0A f* ps0C;
+	setFPMulFlags(ps0A, ps0C, ps0D);
+	ps1D = ps1A f* ps1C;
 }
 
-:ps_mul. fD,fA,fC is OP=4 & fD & fA & BITS_11_15=0 & fC & XOP_1_5=25 & Rc=1
+:ps_mul. fD,fA,fC is OP=4 & fD & fA & BITS_11_15=0 & fC & XOP_1_5=25 & Rc=1 & ps0D & ps1D & ps0A & ps1A & ps0C & ps1C
 {
-
+	ps0D = ps0A f* ps0C;
+	setFPMulFlags(ps0A, ps0C, ps0D);
+	ps1D = ps1A f* ps1C;
+	cr1flags();
 }
 
-:ps_muls0 fD,fA,fC is OP=4 & fD & fA & BITS_11_15=0 & fC & XOP_1_5=12 & Rc=0
+:ps_muls0 fD,fA,fC is OP=4 & fD & fA & BITS_11_15=0 & fC & XOP_1_5=12 & Rc=0 & ps0D & ps1D & ps0A & ps1A & ps0C & ps1C
 {
-
+	ps0D = ps0A f* ps0C;
+	setFPMulFlags(ps0A, ps0C, ps0D);
+	ps1D = ps1A f* ps0C;
 }
 
-:ps_muls0. fD,fA,fC is OP=4 & fD & fA & BITS_11_15=0 & fC & XOP_1_5=12 & Rc=1
+:ps_muls0. fD,fA,fC is OP=4 & fD & fA & BITS_11_15=0 & fC & XOP_1_5=12 & Rc=1 & ps0D & ps1D & ps0A & ps1A & ps0C & ps1C
 {
-
+	ps0D = ps0A f* ps0C;
+	setFPMulFlags(ps0A, ps0C, ps0D);
+	ps1D = ps1A f* ps0C;
+	cr1flags();
 }
 
-:ps_muls1 fD,fA,fC is OP=4 & fD & fA & BITS_11_15=0 & fC & XOP_1_5=13 & Rc=0
+:ps_muls1 fD,fA,fC is OP=4 & fD & fA & BITS_11_15=0 & fC & XOP_1_5=13 & Rc=0 & ps0D & ps1D & ps0A & ps1A & ps0C & ps1C
 {
-
+	ps0D = ps0A f* ps1C;
+	setFPMulFlags(ps0A, ps1C, ps0D);
+	ps1D = ps1A f* ps1C;
 }
 
-:ps_muls1. fD,fA,fC is OP=4 & fD & fA & BITS_11_15=0 & fC & XOP_1_5=13 & Rc=1
+:ps_muls1. fD,fA,fC is OP=4 & fD & fA & BITS_11_15=0 & fC & XOP_1_5=13 & Rc=1 & ps0D & ps1D & ps0A & ps1A & ps0C & ps1C
 {
-
+	ps0D = ps0A f* ps1C;
+	setFPMulFlags(ps0A, ps1C, ps0D);
+	ps1D = ps1A f* ps1C;
+	cr1flags();
 }
 
-:ps_nabs fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=136 & Rc=0
+:ps_nabs fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=136 & Rc=0 & ps0D & ps1D & ps0B & ps1B
 {
-
+	ps0D = f- (abs(ps0B));
+	ps1D = f- (abs(ps1B));
 }
 
-:ps_nabs. fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=136 & Rc=1
+:ps_nabs. fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=136 & Rc=1 & ps0D & ps1D & ps0B & ps1B
 {
-
+	ps0D = f- (abs(ps0B));
+	ps1D = f- (abs(ps1B));
+	cr1flags();
 }
 
-:ps_neg fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=40 & Rc=0
+:ps_neg fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=40 & Rc=0 & ps0D & ps1D & ps0B & ps1B
 {
-
+	ps0D = f- ps0B;
+	ps1D = f- ps1B;
 }
 
-:ps_neg. fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=40 & Rc=1
+:ps_neg. fD,fB is OP=4 & fD & BITS_16_20=0 & fB & XOP_1_10=40 & Rc=1 & ps0D & ps1D & ps0B & ps1B
 {
-
+	ps0D = f- ps0B;
+	ps1D = f- ps1B;
+	cr1flags();
 }
 
-:ps_nmadd fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=31 & Rc=0
+:ps_nmadd fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=31 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	tmp1:4 = ps0A f* ps0C;
+	tmp1 = tmp1 f+ ps0B;
+	ps0D = f- tmp1;
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(ps0A) | nan(ps0C) | nan(ps0B);
+	setSummaryFPSCR();
+	tmp2:4 = ps1A f* ps1C;
+	tmp2 = tmp2 f+ ps1B;
+	ps1D = f- tmp2;
 }
 
-:ps_nmadd. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=31 & Rc=1
+:ps_nmadd. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=31 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	tmp1:4 = ps0A f* ps0C;
+	tmp1 = tmp1 f+ ps0B;
+	ps0D = f- tmp1;
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(ps0A) | nan(ps0C) | nan(ps0B);
+	setSummaryFPSCR();
+	tmp2:4 = ps1A f* ps1C;
+	tmp2 = tmp2 f+ ps1B;
+	ps1D = f- tmp2;
+	cr1flags();
 }
 
-:ps_nmsub fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=30 & Rc=0
+:ps_nmsub fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=30 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	tmp1:4 = ps0A f* ps0C;
+	tmp1 = tmp1 f- ps0B;
+	ps0D = f- tmp1;
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+	setSummaryFPSCR();
+	tmp2:4 = ps1A f* ps1C;
+	tmp2 = tmp2 f- ps1B;
+	ps1D = f- tmp2;
 }
 
-:ps_nmsub. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=30 & Rc=1
+:ps_nmsub. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=30 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	tmp1:4 = ps0A f* ps0C;
+	tmp1 = tmp1 f- ps0B;
+	ps0D = f- tmp1;
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
+	setSummaryFPSCR();
+	tmp2:4 = ps1A f* ps1C;
+	tmp2 = tmp2 f- ps1B;
+	ps1D = f- tmp2;
+	cr1flags();
 }
 
-:ps_res fD,fB is OP=4 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=24 & Rc=0
+:ps_res fD,fB is OP=4 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=24 & Rc=0 & ps0D & ps1D & ps0B & ps1B
 {
-
+	one:4 = 1;
+	floatOne:4 = int2float(one);
+	tmp1:4 = float2float(floatOne f/ ps0B);
+	ps0D = float2float(tmp1);
+	setFPRF(fD);
+	fp_zx = fp_zx | (fB f== 0);
+	fp_vxsnan = fp_vxsnan | nan(ps0B);
+	setSummaryFPSCR();
+	tmp2:4 = float2float(floatOne f/ ps1B);
+	ps1D = float2float(tmp2);
 }
 
-:ps_res. fD,fB is OP=4 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=24 & Rc=1
+:ps_res. fD,fB is OP=4 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=24 & Rc=1 & ps0D & ps1D & ps0B & ps1B
 {
-
+	one:4 = 1;
+	floatOne:4 = int2float(one);
+	tmp1:4 = float2float(floatOne f/ ps0B);
+	ps0D = float2float(tmp1);
+	setFPRF(fD);
+	fp_zx = fp_zx | (fB f== 0);
+	fp_vxsnan = fp_vxsnan | nan(ps0B);
+	setSummaryFPSCR();
+	tmp2:4 = float2float(floatOne f/ ps1B);
+	ps1D = float2float(tmp2);
+	cr1flags();
 }
 
-:ps_rsqrte fD,fB is OP=4 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=26 & Rc=0
+:ps_rsqrte fD,fB is OP=4 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=26 & Rc=0 & ps0D & ps1D & ps0B & ps1B
 {
-
+	one:4 = 1;
+	floatOne:4 = int2float(one);
+	tmpSqrt1:4 = sqrt(ps0B);
+	ps0D = (floatOne f/ tmpSqrt1);
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(ps0B);
+	setSummaryFPSCR();
+	tmpSqrt2:4 = sqrt(ps1B);
+	ps1D = (floatOne f/ tmpSqrt2);
 }
 
-:ps_rsqrte. fD,fB is OP=4 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=26 & Rc=1
+:ps_rsqrte. fD,fB is OP=4 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=26 & Rc=1 & ps0D & ps1D & ps0B & ps1B
 {
-
+	one:4 = 1;
+	floatOne:4 = int2float(one);
+	tmpSqrt1:4 = sqrt(ps0B);
+	ps0D = (floatOne f/ tmpSqrt1);
+	setFPRF(ps0D);
+	fp_xx = fp_xx | fp_fi;
+	fp_vxsnan = fp_vxsnan | nan(ps0B);
+	setSummaryFPSCR();
+	tmpSqrt2:4 = sqrt(ps1B);
+	ps1D = (floatOne f/ tmpSqrt2);
+	cr1flags();
 }
 
-:ps_sel fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=23 & Rc=0
+:ps_sel fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=23 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	zero:4 = 0;
+	zeroFloat:4 = int2float(zero);
+	ps0D = ps0C;
+	if (ps0A f>= zeroFloat) goto <ps1test>; 
+	ps0D = ps0B;
+	<ps1test>
+	ps1D = ps1C;
+	if (ps1A f>= zeroFloat) goto inst_next; 
+	ps1D = ps1B;
 }
 
-:ps_sel. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=23 & Rc=1
+:ps_sel. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=23 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	zero:4 = 0;
+	zeroFloat:4 = int2float(zero);
+	ps0D = ps0C;
+	if (ps0A f>= zeroFloat) goto <ps1test>; 
+	ps0D = ps0B;
+	<ps1test>
+	ps1D = ps1C;
+	cr1flags();
+	if (ps1A f>= zeroFloat) goto inst_next; 
+	ps1D = ps1B;
+	cr1flags();
 }
 
-:ps_sub fD,fA,fB is OP=4 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=20 & Rc=0
+:ps_sub fD,fA,fB is OP=4 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=20 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps0A f- ps0B;
+	setFPSubFlags(ps0A, ps0B, ps0D);
+	ps1D = ps1A f- ps1B;
 }
 
-:ps_sub. fD,fA,fB is OP=4 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=20 & Rc=1
+:ps_sub. fD,fA,fB is OP=4 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=20 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A
 {
-
+	ps0D = ps0A f- ps0B;
+	setFPSubFlags(ps0A, ps0B, ps0D);
+	ps1D = ps1A f- ps1B;
+	cr1flags();
 }
 
-:ps_sum0 fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=10 & Rc=0
+:ps_sum0 fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=10 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	ps0D = ps0A f+ ps1B;
+	setFPAddFlags(ps0A, ps1B, ps0D);
+	ps1D = ps1C;
 }
 
-:ps_sum0. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=10 & Rc=1
+:ps_sum0. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=10 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	ps0D = ps0A f+ ps1B;
+	setFPAddFlags(ps0A, ps1B, ps0D);
+	ps1D = ps1C;
+	cr1flags();
 }
 
-:ps_sum1 fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=11 & Rc=0
+:ps_sum1 fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=11 & Rc=0 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	ps0D = ps0C;
+	ps1D = ps0A f+ ps1B;
+	setFPAddFlags(ps0A, ps1B, ps1D);
 }
 
-:ps_sum1. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=11 & Rc=1
+:ps_sum1. fD,fA,fC,fB is OP=4 & fD & fA & fB & fC & XOP_1_5=11 & Rc=1 & ps0D & ps1D & ps0B & ps1B & ps0A & ps1A & ps0C & ps1C
 {
-
+	ps0D = ps0C;
+	ps1D = ps0A f+ ps1B;
+	setFPAddFlags(ps0A, ps1B, ps1D);
+	cr1flags();
 }
+
+################################################################
+# Cache instructions
+################################################################
+
+:dcbz_l RA_OR_ZERO,B is OP=4 & BITS_21_25=0 & RA_OR_ZERO & B & XOP_1_10=1014 & BIT_0=0
+{
+	ea:4 = RA_OR_ZERO + B;
+	dataCacheBlockSetToZeroLocked(ea);
+}
+
