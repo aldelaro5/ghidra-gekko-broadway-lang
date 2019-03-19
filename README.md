@@ -8,7 +8,7 @@ For quantizations, two new PCode operations are defined like so:
     quantize(PS, type, scale)
     dequantize(EA, type, scale)
 
-Where PS is a ps register, EA is the effective address of the load, type is the GQR type setting (4 = U8, 5 = U16, 6 = S8 and 7 = S16) and scale is the GQR scale setting. For clean decompilation output, consider setting the GQR values so it can properly assume their contents as most games will set them without changing them after.
+Where PS is a ps register, EA is the effective address of the load, type is the GQR type setting (4 = U8, 5 = U16, 6 = S8 and 7 = S16) and scale is the GQR scale setting. For clean decompilation output, consider setting the GQR values so it can properly assume their contents as most games will set them without changing them after. You might see warnings in the decompiler window about unreachable code for the psq instructions if you do so; this is normal as the decompiler will optimise out quantizations that won't happen.
 
 # Installation
 
