@@ -783,38 +783,8 @@ define pcodeop storeString;
 
 define pcodeop xer_mac_update;
 
-define pcodeop macchw;
-define pcodeop macchws;
-define pcodeop macchwsu;
-define pcodeop macchwu;
-
-define pcodeop machhw;
-define pcodeop machhws;
-define pcodeop machhwsu;
-define pcodeop machhwu;
-
-define pcodeop maclhw;
-define pcodeop maclhws;
-define pcodeop maclhwsu;
-define pcodeop maclhwu;
-
-define pcodeop mulchw;
-define pcodeop mulchwu;
-
-define pcodeop mulhhw;
-define pcodeop mulhhwu;
-
 define pcodeop mullhw;
 define pcodeop mullhwu;
-
-define pcodeop nmacchw;
-define pcodeop nmacchws;
-
-define pcodeop nmachhw;
-define pcodeop nmachhws;
-
-define pcodeop nmaclhw;
-define pcodeop nmaclhws;
 
 define pcodeop copytrans;
 define pcodeop pastetrans;
@@ -1181,7 +1151,7 @@ CRM_CR:	cr0		is CRM=128 & cr0	{tmp:4 = zext(cr0) << 28;export tmp;}
 # Instructions
 ################################################################
 
-@include "ppc_instructions.sinc"
+@include "ppc_instructions_gekko_broadway.sinc"
 @include "ppc_embedded.sinc"
 
 ################################################################
