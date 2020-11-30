@@ -1158,31 +1158,16 @@ CRM_CR:	cr0		is CRM=128 & cr0	{tmp:4 = zext(cr0) << 28;export tmp;}
 # Paired singles quantized load and store instructions
 ################################################################
 
+define pcodeop __psq_l0;
+define pcodeop __psq_l1;
 :psq_l fD,dPlusRaOrZeroAddressPS,W,I is OP=56 & fD & A & W & I & dPlusRaOrZeroAddressPS & ps0D & ps1D
 {
 	EA:4 = dPlusRaOrZeroAddressPS;
 	wFlag:1 = W;
-	type:1 = 0;
-	scale:1 = 0;
-	type[0,3] = I[16,3];
-	scale[0,3] = I[24,6];
-	if (type == 4 || type == 6) goto <int8>;
-	if (type == 5 || type == 7) goto <int16>;
-	goto <none>;
-	<int8>
-	ps0D = dequantize(EA, type, scale);
+	ps0D = __psq_l0(EA, I);
 	if (wFlag == 1) goto <wIsOne>;
-	ps1D = dequantize(EA + 1, type, scale);
+	ps1D = __psq_l1(EA, I);
 	goto inst_next;
-	<int16>
-	ps0D = dequantize(EA, type, scale);
-	if (wFlag == 1) goto <wIsOne>;
-	ps1D = dequantize(EA + 2, type, scale);
-	goto inst_next;
-	<none>
-	ps0D = *:4(EA);
-	ps1D = *:4(EA + 4);
-	if (wFlag == 0) goto inst_next;
 	<wIsOne>
 	one:1 = 1;
 	floatOne:4 = int2float(one);
@@ -1284,31 +1269,15 @@ CRM_CR:	cr0		is CRM=128 & cr0	{tmp:4 = zext(cr0) << 28;export tmp;}
 	ps1D = floatOne;
 }
 
+define pcodeop __psq_st0;
+define pcodeop __psq_st1;
 :psq_st fS,dPlusRaOrZeroAddressPS,W,I is OP=60 & fS & A & W & I & dPlusRaOrZeroAddressPS & ps0S & ps1S
 {
 	EA:4 = dPlusRaOrZeroAddressPS;
 	wFlag:1 = W;
-	type:1 = 0;
-	scale:1 = 0;
-	type[0,3] = I[0,3];
-	scale[0,3] = I[8,6];
-	if (type == 4 || type == 6) goto <int8>;
-	if (type == 5 || type == 7) goto <int16>;
-	goto <none>;
-	<int8>
-	*:1(EA) = quantize(ps0S, type, scale);
+	__psq_st0(EA, ps0S, I);
 	if (wFlag == 1) goto inst_next;
-	*:1(EA + 1) = quantize(ps1S, type, scale);
-	goto inst_next;
-	<int16>
-	*:2(EA) = quantize(ps0S, type, scale);
-	if (wFlag == 1) goto inst_next;
-	*:2(EA + 2) = quantize(ps1S, type, scale);
-	goto inst_next;
-	<none>
-	*:4(EA) = ps0S;
-	if (wFlag == 1) goto inst_next;
-	*:4(EA + 4) = ps1S;
+	__psq_st1(EA, ps1S, I);
 }
 
 :psq_stu fS,dPlusRaAddressPS,W,I is OP=61 & fS & A & W & I & dPlusRaAddressPS & ps0S & ps1S
@@ -1911,4 +1880,3 @@ CRM_CR:	cr0		is CRM=128 & cr0	{tmp:4 = zext(cr0) << 28;export tmp;}
 	ea:4 = RA_OR_ZERO + B;
 	dataCacheBlockSetToZeroLocked(ea);
 }
-
