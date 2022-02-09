@@ -1,3 +1,5 @@
+NOTE: this got integrated into https://github.com/Cuyler36/Ghidra-GameCube-Loader which is where maintenance will be done from now on.
+
 # ghidra-gekko-broadway-lang
 Language definition for the Gekko and Broadway CPU variant used in the Nintendo GameCube and Nintendo Wii respectively.
 
